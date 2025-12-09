@@ -1,0 +1,38 @@
+# Source files (only dist should be published)
+src/
+tsconfig.json
+
+# Development files
+.git/
+.github/
+.gitignore
+.DS_Store
+.vscode/
+.idea/
+*.log
+*.pid
+
+# Example vault
+EXAMPLE/
+
+# Test files
+test/
+tests/
+*.test.ts
+*.spec.ts
+
+# Documentation that's not needed in npm
+LINUX_SERVICE.md
+
+# Build artifacts we don't need
+*.tsbuildinfo
+.cursor/
+
+# Local development
+node_modules/
+.env
+.env.local
+
+# Terminals folder
+terminals/
+

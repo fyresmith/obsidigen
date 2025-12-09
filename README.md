@@ -30,20 +30,26 @@ Render your Obsidian vaults as beautiful web wikis with Cloudflare Tunnel integr
 
 ## Installation
 
+### From npm (Recommended)
+
 ```bash
-# Clone and install
-git clone <repo>
+npm install -g obsidigen
+```
+
+### From Source
+
+```bash
+git clone https://github.com/yourusername/obsidigen.git
 cd obsidigen
 npm install
 npm run build
 npm link
 ```
 
-Or, once published to npm:
+### Requirements
 
-```bash
-npm install -g obsidigen
-```
+- Node.js 18 or higher
+- npm or yarn
 
 ## Quick Start
 
@@ -359,7 +365,44 @@ npm link
 obsidigen --help
 ```
 
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+### Getting Started
+
+1. Fork the repository
+2. Clone your fork: `git clone https://github.com/yourusername/obsidigen.git`
+3. Create a branch: `git checkout -b feature/your-feature`
+4. Make your changes and commit: `git commit -am 'Add some feature'`
+5. Push to the branch: `git push origin feature/your-feature`
+6. Submit a Pull Request
+
+### Development Guidelines
+
+- Follow the existing code style
+- Add tests for new features (when test suite is available)
+- Update documentation for user-facing changes
+- Keep commits focused and write clear commit messages
+
+## Publishing
+
+For maintainers publishing to npm, see [PUBLISHING.md](PUBLISHING.md) for detailed instructions.
+
+Quick publish:
+
+```bash
+# Bump version and publish
+npm run release:patch  # For bug fixes
+npm run release:minor  # For new features
+npm run release:major  # For breaking changes
+
+# Manual publish
+npm version patch
+npm publish
+```
+
 ## License
 
-MIT
+MIT - see [LICENSE](LICENSE) file for details
 

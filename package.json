@@ -1,12 +1,19 @@
 {
   "name": "obsidigen",
   "version": "1.0.0",
-  "description": "Render Obsidian vaults as web wikis with Cloudflare Tunnel integration",
+  "description": "Transform your Obsidian vault into a beautiful, browsable wiki with a modern three-column interface, hover previews, and optional Cloudflare Tunnel integration",
   "type": "module",
   "main": "dist/cli.js",
   "bin": {
     "obsidigen": "./dist/cli.js"
   },
+  "files": [
+    "dist/**/*",
+    "public/**/*",
+    "README.md",
+    "LICENSE",
+    "LINUX_SERVICE.md"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
@@ -21,11 +28,29 @@
     "obsidian",
     "wiki",
     "markdown",
+    "knowledge-base",
+    "personal-wiki",
+    "second-brain",
+    "note-taking",
     "cloudflare",
-    "tunnel"
+    "cloudflare-tunnel",
+    "backlinks",
+    "wiki-links",
+    "documentation",
+    "static-site",
+    "vault",
+    "zettelkasten"
   ],
-  "author": "",
+  "author": "Caleb Smith",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/obsidigen.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/obsidigen/issues"
+  },
+  "homepage": "https://github.com/yourusername/obsidigen#readme",
   "dependencies": {
     "chalk": "^5.3.0",
     "chokidar": "^3.5.3",
