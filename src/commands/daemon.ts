@@ -1,11 +1,12 @@
 // Daemon mode - runs all registered vaults
 
 import chalk from 'chalk';
-import { fork, ChildProcess } from 'child_process';
-import { resolve, dirname } from 'path';
+import { fork, ChildProcess, spawn } from 'child_process';
+import { resolve, dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import { existsSync } from 'fs';
 import { getRegisteredVaults } from '../config/global.js';
-import { getVaultConfig, isInitialized } from '../config/vault.js';
+import { getVaultConfig, isInitialized, getObsidigenDir } from '../config/vault.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -15,6 +16,8 @@ interface RunningVault {
   name: string;
   port: number;
   process: ChildProcess;
+  tunnelProcess?: ChildProcess;
+  hasTunnel: boolean;
 }
 
 const runningVaults: Map<string, RunningVault> = new Map();
@@ -68,9 +71,16 @@ async function startVault(vaultPath: string, name: string, port: number): Promis
     return false;
   }
   
+  // Check if vault has tunnel configured
+  const hasTunnel = config.tunnel?.tunnelId ? true : false;
+  const obsidigenDir = getObsidigenDir(vaultPath);
+  const tunnelConfigPath = join(obsidigenDir, 'tunnel.yml');
+  const hasTunnelConfig = hasTunnel && existsSync(tunnelConfigPath);
+  
   const serverPath = resolve(__dirname, '../server/index.js');
   
   try {
+    // Start the server
     const child = fork(serverPath, [], {
       env: {
         ...process.env,
@@ -89,7 +99,14 @@ async function startVault(vaultPath: string, name: string, port: number): Promis
     });
     
     child.on('exit', (code) => {
-      console.log(chalk.yellow(`[${name}] Process exited with code ${code}`));
+      console.log(chalk.yellow(`[${name}] Server exited with code ${code}`));
+      
+      // Stop tunnel if running
+      const vault = runningVaults.get(vaultPath);
+      if (vault?.tunnelProcess) {
+        vault.tunnelProcess.kill('SIGTERM');
+      }
+      
       runningVaults.delete(vaultPath);
       
       // Attempt restart after delay
@@ -101,14 +118,62 @@ async function startVault(vaultPath: string, name: string, port: number): Promis
       }, 5000);
     });
     
+    let tunnelProcess: ChildProcess | undefined;
+    
+    // Start tunnel if configured
+    if (hasTunnelConfig) {
+      try {
+        tunnelProcess = spawn('cloudflared', ['tunnel', '--config', tunnelConfigPath, 'run'], {
+          stdio: ['ignore', 'pipe', 'pipe'],
+          detached: false,
+        });
+        
+        tunnelProcess.stdout?.on('data', (data) => {
+          const text = data.toString().trim();
+          if (text.includes('Registered tunnel connection') || text.includes('Starting tunnel')) {
+            console.log(`[${name}] ${chalk.cyan(text)}`);
+          }
+        });
+        
+        tunnelProcess.stderr?.on('data', (data) => {
+          const text = data.toString().trim();
+          if (text.includes('ERR') || text.includes('error')) {
+            console.error(`[${name}] Tunnel: ${chalk.red(text)}`);
+          }
+        });
+        
+        tunnelProcess.on('exit', (code) => {
+          console.log(chalk.yellow(`[${name}] Tunnel exited with code ${code}`));
+          
+          // Try to restart tunnel
+          setTimeout(() => {
+            const vault = runningVaults.get(vaultPath);
+            if (vault && !vault.tunnelProcess) {
+              console.log(chalk.gray(`[${name}] Restarting tunnel...`));
+              startVault(vaultPath, name, port);
+            }
+          }, 5000);
+        });
+        
+        console.log(chalk.green(`✓ Started ${name} on port ${port} with Cloudflare Tunnel`));
+        console.log(chalk.gray(`  Public URL: https://${config.tunnel?.hostname}`));
+      } catch (error) {
+        console.error(chalk.yellow(`⚠ Failed to start tunnel for ${name}: ${error}`));
+        console.log(chalk.gray(`  Server will run locally only`));
+      }
+    } else {
+      console.log(chalk.green(`✓ Started ${name} on port ${port}`));
+    }
+    
     runningVaults.set(vaultPath, {
       path: vaultPath,
       name,
       port,
       process: child,
+      tunnelProcess,
+      hasTunnel: hasTunnelConfig,
     });
     
-    console.log(chalk.green(`✓ Started ${name} on port ${port}`));
     return true;
     
   } catch (error) {
@@ -124,6 +189,9 @@ function stopVault(vaultPath: string): void {
   const vault = runningVaults.get(vaultPath);
   if (vault) {
     vault.process.kill('SIGTERM');
+    if (vault.tunnelProcess) {
+      vault.tunnelProcess.kill('SIGTERM');
+    }
     runningVaults.delete(vaultPath);
   }
 }
@@ -137,6 +205,10 @@ function shutdown(): void {
   for (const [path, vault] of runningVaults) {
     console.log(`  Stopping ${vault.name}...`);
     vault.process.kill('SIGTERM');
+    if (vault.tunnelProcess) {
+      console.log(`  Stopping tunnel for ${vault.name}...`);
+      vault.tunnelProcess.kill('SIGTERM');
+    }
   }
   
   runningVaults.clear();

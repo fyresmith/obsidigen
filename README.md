@@ -296,12 +296,22 @@ obsidigen access setup
 
 ## Run on Boot
 
-Obsidigen can run as a system service on both macOS and Linux, automatically starting your wiki(s) on login.
+Obsidigen can run as a system service on both macOS and Linux, automatically starting your wiki(s) on login. **If your vault has a Cloudflare Tunnel configured, it will automatically start with the tunnel.**
 
 ### Quick Start
 
 ```bash
 cd /path/to/vault
+obsidigen service install
+obsidigen service start
+```
+
+**With Cloudflare Tunnel:**
+```bash
+# Configure tunnel first
+obsidigen tunnel create --domain wiki.example.com
+
+# Then install service (tunnel will start automatically)
 obsidigen service install
 obsidigen service start
 ```
@@ -390,6 +400,39 @@ obsidigen service start
 obsidigen service list
 ```
 
+### Tunnel Support
+
+The daemon **automatically detects** if your vault has a Cloudflare Tunnel configured and starts it along with the server:
+
+```bash
+# Setup vault with tunnel
+cd /path/to/vault
+obsidigen init --name "My Wiki" --port 4000
+obsidigen tunnel create --domain wiki.example.com
+
+# Install service (will start both server and tunnel)
+obsidigen service install
+obsidigen service start
+```
+
+**What happens:**
+- If `tunnel` is configured in `.obsidigen/config.json`, the daemon starts both the server and cloudflared
+- If no tunnel is configured, it only starts the local server
+- Tunnel connections are automatically restarted if they fail
+- Both server and tunnel logs are visible in the daemon logs
+
+**Check tunnel status:**
+```bash
+# macOS - watch the logs
+tail -f ~/.obsidigen/daemon.log
+
+# Linux - watch the logs
+journalctl --user -u obsidigen-daemon -f
+
+# You should see: "Started MyWiki on port 4000 with Cloudflare Tunnel"
+# And: "Public URL: https://wiki.example.com"
+```
+
 ### Troubleshooting
 
 #### Service won't start
@@ -407,6 +450,7 @@ Common issues:
 - Port already in use
 - Vault directory doesn't exist
 - Permissions issues
+- Tunnel credentials missing (recreate with `obsidigen tunnel create`)
 
 #### Linux: Service not loading on login
 
