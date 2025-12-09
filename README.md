@@ -8,6 +8,7 @@ Render your Obsidian vaults as beautiful web wikis with Cloudflare Tunnel integr
 - **Three-Column Layout** - Navigation tree, content, and widgets panel
 - **Tree Navigation** - Collapsible folder structure with current page highlighting
 - **Smart Widgets** - Properties display, table of contents with scroll spy, backlinks
+- **Hover Previews** - Preview page content by hovering over any wiki link
 - **Light/Dark Themes** - Toggle between themes with localStorage persistence
 - **Responsive Design** - Mobile-friendly with slide-out navigation panels
 - **Live Search** - Fast search with keyboard shortcuts (⌘K / Ctrl+K)
@@ -98,6 +99,17 @@ Obsidigen features a clean, three-column wiki layout:
 - Light/dark mode switcher at the bottom of the right sidebar
 - Preference saved in localStorage
 - Respects system theme preference on first visit
+
+### Hover Previews
+- Hover over any wiki link to see a preview of the page (except tree navigation)
+- 300ms delay before preview appears
+- Preview shows page title and content
+- Hover over the preview to keep it open and scroll through content
+- Click anywhere on the preview to navigate to that page
+- Links inside previews are disabled (click preview to navigate)
+- Cached for instant subsequent previews
+- Automatically positioned to stay on screen
+- Border highlights on hover
 
 ### Mobile Experience
 - Hamburger menu for navigation (left)
@@ -240,6 +252,8 @@ journalctl --user -u obsidigen-daemon -f
 **Implemented:**
 - Wiki links `[[Page]]` with automatic resolution
 - Wiki links with aliases `[[Page|Display Text]]`
+- Wiki links in frontmatter properties
+- Hover previews for wiki links (Obsidian-style)
 - Frontmatter aliases and metadata
 - YAML frontmatter with full property display
 - Headers with automatic anchor links

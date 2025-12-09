@@ -9,6 +9,7 @@ import { wikiRoutes } from './routes/wiki.js';
 import { searchRoutes } from './routes/search.js';
 import { graphRoutes } from './routes/graph.js';
 import { treeRoutes } from './routes/tree.js';
+import { previewRoutes } from './routes/preview.js';
 import chalk from 'chalk';
 
 export interface ServerContext {
@@ -43,6 +44,7 @@ export async function startServer(vaultPath: string, port: number): Promise<void
   app.route('/api/search', searchRoutes);
   app.route('/api/graph', graphRoutes);
   app.route('/api/tree', treeRoutes);
+  app.route('/api/preview', previewRoutes);
   
   // Wiki routes (must be last - catches all paths)
   app.route('/', wikiRoutes);

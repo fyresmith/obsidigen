@@ -1039,6 +1039,114 @@ body {
 }
 
 /* ============================================
+   HOVER PREVIEW
+   ============================================ */
+
+.page-preview {
+  position: fixed;
+  max-width: 400px;
+  max-height: 300px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 8px 24px var(--shadow);
+  z-index: 10000;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.page-preview.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.page-preview:hover {
+  border-color: var(--accent);
+  box-shadow: 0 8px 32px var(--shadow);
+}
+
+.page-preview-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.page-preview-content {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  max-height: 200px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.page-preview-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.page-preview-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.page-preview-content::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+/* Scale down content in preview */
+.page-preview-content h1,
+.page-preview-content h2,
+.page-preview-content h3 {
+  font-size: 0.9rem;
+  margin: 0.5rem 0 0.25rem;
+}
+
+.page-preview-content p {
+  margin-bottom: 0.5rem;
+}
+
+.page-preview-content ul,
+.page-preview-content ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.page-preview-content li {
+  margin-bottom: 0.25rem;
+}
+
+.page-preview-content code {
+  font-size: 0.8em;
+}
+
+.page-preview-content pre {
+  font-size: 0.75rem;
+  padding: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.page-preview-content a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  border-bottom: none;
+  cursor: default;
+}
+
+.page-preview-loading {
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+  padding: 1rem;
+}
+
+/* ============================================
    ANIMATIONS
    ============================================ */
 
@@ -1375,6 +1483,182 @@ function initTOC() {
 }
 
 // ============================================
+// HOVER PREVIEW
+// ============================================
+
+let previewPopover = null;
+let previewTimeout = null;
+let hideTimeout = null;
+let currentPreviewLink = null;
+let currentPreviewSlug = null;
+let isOverPreview = false;
+let isOverLink = false;
+const previewCache = new Map();
+
+function initHoverPreview() {
+  // Create preview popover element
+  previewPopover = document.createElement('div');
+  previewPopover.className = 'page-preview';
+  previewPopover.innerHTML = '<div class="page-preview-loading">Loading...</div>';
+  document.body.appendChild(previewPopover);
+  
+  // Add hover listeners to all wiki links
+  document.addEventListener('mouseover', handleLinkHover);
+  document.addEventListener('mouseout', handleLinkOut);
+  
+  // Handle hovering over the preview itself
+  previewPopover.addEventListener('mouseenter', () => {
+    isOverPreview = true;
+    clearTimeout(hideTimeout);
+  });
+  
+  previewPopover.addEventListener('mouseleave', () => {
+    isOverPreview = false;
+    scheduleHide();
+  });
+  
+  // Handle clicking the preview
+  previewPopover.addEventListener('click', (e) => {
+    // Don't navigate if clicking a link inside (we'll prevent that separately)
+    if (e.target.tagName === 'A') return;
+    
+    // Navigate to the page
+    if (currentPreviewSlug) {
+      window.location.href = '/' + currentPreviewSlug;
+    }
+  });
+}
+
+function handleLinkHover(e) {
+  const link = e.target.closest('a[href^="/"]');
+  if (!link || link.closest('.page-preview')) return;
+  
+  // Ignore tree navigation links
+  if (link.classList.contains('tree-page-link')) return;
+  
+  // Ignore if it's a heading anchor
+  if (link.getAttribute('href').includes('#')) return;
+  
+  isOverLink = true;
+  currentPreviewLink = link;
+  
+  // Cancel any pending hide
+  clearTimeout(hideTimeout);
+  
+  // Show preview after delay
+  clearTimeout(previewTimeout);
+  previewTimeout = setTimeout(() => {
+    if (currentPreviewLink === link && isOverLink) {
+      showPreview(link);
+    }
+  }, 300);
+}
+
+function handleLinkOut(e) {
+  const link = e.target.closest('a[href^="/"]');
+  if (link === currentPreviewLink) {
+    isOverLink = false;
+    clearTimeout(previewTimeout);
+    scheduleHide();
+  }
+}
+
+function scheduleHide() {
+  clearTimeout(hideTimeout);
+  hideTimeout = setTimeout(() => {
+    if (!isOverLink && !isOverPreview) {
+      hidePreview();
+      currentPreviewLink = null;
+      currentPreviewSlug = null;
+    }
+  }, 200);
+}
+
+async function showPreview(link) {
+  const href = link.getAttribute('href');
+  const slug = href.substring(1); // Remove leading /
+  
+  if (!slug) return;
+  
+  currentPreviewSlug = slug;
+  
+  // Position the preview
+  const rect = link.getBoundingClientRect();
+  const previewWidth = 400;
+  const previewMaxHeight = 300;
+  
+  // Try to position below the link, but flip if too close to bottom
+  let top = rect.bottom + window.scrollY + 8;
+  let left = rect.left + window.scrollX;
+  
+  // Adjust if too close to right edge
+  if (left + previewWidth > window.innerWidth) {
+    left = window.innerWidth - previewWidth - 20;
+  }
+  
+  // Adjust if too close to bottom
+  if (rect.bottom + previewMaxHeight > window.innerHeight) {
+    top = rect.top + window.scrollY - previewMaxHeight - 8;
+  }
+  
+  previewPopover.style.left = left + 'px';
+  previewPopover.style.top = top + 'px';
+  
+  // Check cache first
+  if (previewCache.has(slug)) {
+    const cached = previewCache.get(slug);
+    renderPreview(cached, slug);
+    previewPopover.classList.add('active');
+    return;
+  }
+  
+  // Show loading state
+  previewPopover.innerHTML = '<div class="page-preview-loading">Loading...</div>';
+  previewPopover.classList.add('active');
+  
+  try {
+    const response = await fetch('/api/preview/' + slug);
+    if (!response.ok) throw new Error('Preview not found');
+    
+    const data = await response.json();
+    
+    // Cache the result
+    previewCache.set(slug, data);
+    
+    // Only render if we're still hovering the same link
+    if (currentPreviewLink && currentPreviewLink.getAttribute('href') === href) {
+      renderPreview(data, slug);
+    }
+  } catch (error) {
+    if (currentPreviewLink && currentPreviewLink.getAttribute('href') === href) {
+      previewPopover.innerHTML = '<div class="page-preview-loading">Preview not available</div>';
+    }
+  }
+}
+
+function renderPreview(data, slug) {
+  previewPopover.innerHTML = \`
+    <div class="page-preview-title">\${escapeHtml(data.title)}</div>
+    <div class="page-preview-content">\${data.content}</div>
+  \`;
+  
+  // Disable all links inside the preview
+  const links = previewPopover.querySelectorAll('a');
+  links.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+    link.style.pointerEvents = 'none';
+  });
+}
+
+function hidePreview() {
+  clearTimeout(previewTimeout);
+  previewPopover.classList.remove('active');
+}
+
+// ============================================
 // INIT
 // ============================================
 
@@ -1384,6 +1668,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initSearch();
   initMobile();
   initTOC();
+  initHoverPreview();
 });
 `;
 
@@ -1416,13 +1701,20 @@ function layout(title: string, content: string, options: { vaultName?: string; c
     if (key === 'tags' && Array.isArray(value)) {
       displayValue = value.map(tag => `<span class="properties-tag">${escapeHtml(String(tag))}</span>`).join('');
     } else if (Array.isArray(value)) {
-      displayValue = value.map(v => escapeHtml(String(v))).join(', ');
+      displayValue = value.map(v => {
+        const str = String(v);
+        return str.includes('[[') ? renderWikiLinks(str) : escapeHtml(str);
+      }).join(', ');
     } else if (typeof value === 'object' && value !== null) {
       displayValue = escapeHtml(JSON.stringify(value));
     } else if (typeof value === 'boolean') {
       displayValue = value ? 'Yes' : 'No';
     } else {
-      displayValue = escapeHtml(String(value));
+      const stringValue = String(value);
+      // Check if the value contains wiki links and render them
+      displayValue = stringValue.includes('[[') 
+        ? renderWikiLinks(stringValue) 
+        : escapeHtml(stringValue);
     }
     
     // Capitalize first letter of key
@@ -1641,4 +1933,21 @@ function escapeHtml(text: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+/**
+ * Convert wiki links [[Page]] or [[Page|Alias]] to HTML links
+ */
+function renderWikiLinks(text: string): string {
+  // Match [[Page]] or [[Page|Alias]]
+  return text.replace(/\[\[([^\]]+?)\]\]/g, (match, content) => {
+    const parts = content.split('|');
+    const pageName = parts[0].trim();
+    const displayText = parts[1] ? parts[1].trim() : pageName;
+    
+    // Convert page name to slug (simple version - just URL encode)
+    const slug = encodeURIComponent(pageName);
+    
+    return `<a href="/${slug}">${escapeHtml(displayText)}</a>`;
+  });
 }
