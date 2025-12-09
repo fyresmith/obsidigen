@@ -296,14 +296,17 @@ obsidigen access setup
 
 ## Run on Boot
 
-Register your vault(s) to start automatically on login (supports macOS and Linux):
+Obsidigen can run as a system service on both macOS and Linux, automatically starting your wiki(s) on login.
+
+### Quick Start
 
 ```bash
 cd /path/to/vault
 obsidigen service install
+obsidigen service start
 ```
 
-### Service Management
+### Service Commands
 
 | Command | Description |
 |---------|-------------|
@@ -313,18 +316,128 @@ obsidigen service install
 | `obsidigen service stop` | Stop the daemon |
 | `obsidigen service list` | Show registered vaults and status |
 
-**Platform Support:**
-- **macOS**: Uses launchd (`~/Library/LaunchAgents/com.obsidigen.daemon.plist`)
-- **Linux**: Uses systemd (`~/.config/systemd/user/obsidigen-daemon.service`)
+### Platform-Specific Details
 
-**View Logs:**
+#### macOS (launchd)
+
+**Service file location:**
+```
+~/Library/LaunchAgents/com.obsidigen.daemon.plist
+```
+
+**View logs:**
+```bash
+tail -f ~/.obsidigen/daemon.log
+```
+
+#### Linux (systemd)
+
+**Requirements:**
+- Linux with systemd (most modern distributions)
+- systemd user services enabled
+
+**Service file location:**
+```
+~/.config/systemd/user/obsidigen-daemon.service
+```
+
+**Direct systemd commands:**
+```bash
+# Start/stop/restart
+systemctl --user start obsidigen-daemon
+systemctl --user stop obsidigen-daemon
+systemctl --user restart obsidigen-daemon
+
+# Enable/disable autostart
+systemctl --user enable obsidigen-daemon
+systemctl --user disable obsidigen-daemon
+
+# Check status
+systemctl --user status obsidigen-daemon
+```
+
+**View logs:**
+```bash
+# Follow logs in real-time
+journalctl --user -u obsidigen-daemon -f
+
+# View last 50 lines
+journalctl --user -u obsidigen-daemon -n 50
+
+# View logs since boot
+journalctl --user -u obsidigen-daemon -b
+```
+
+### Multiple Vaults
+
+You can register multiple vaults to run simultaneously:
+
+```bash
+# Register first vault
+cd /path/to/vault1
+obsidigen init --name "Vault 1" --port 4000
+obsidigen service install
+
+# Register second vault
+cd /path/to/vault2
+obsidigen init --name "Vault 2" --port 4001
+obsidigen service install
+
+# Start the daemon (runs all vaults)
+obsidigen service start
+
+# List all registered vaults
+obsidigen service list
+```
+
+### Troubleshooting
+
+#### Service won't start
+
+Check the logs:
 ```bash
 # macOS
-tail -f ~/.obsidigen/daemon.log
+cat ~/.obsidigen/daemon.log
 
 # Linux
-journalctl --user -u obsidigen-daemon -f
+journalctl --user -u obsidigen-daemon -n 50
 ```
+
+Common issues:
+- Port already in use
+- Vault directory doesn't exist
+- Permissions issues
+
+#### Linux: Service not loading on login
+
+Enable user lingering (allows services to run without active session):
+```bash
+loginctl enable-linger $USER
+```
+
+#### Uninstalling the service
+
+```bash
+# Remove all registered vaults
+cd /path/to/each/vault
+obsidigen service remove
+
+# Or manually (Linux)
+systemctl --user stop obsidigen-daemon
+systemctl --user disable obsidigen-daemon
+rm ~/.config/systemd/user/obsidigen-daemon.service
+systemctl --user daemon-reload
+```
+
+### Architecture
+
+The Obsidigen daemon:
+1. Reads the global config (`~/.obsidigen/config.json`) for registered vaults
+2. Starts a separate Node.js process for each vault
+3. Monitors health and restarts crashed vaults
+4. Handles graceful shutdown
+
+Each vault runs independently on its configured port.
 
 ## Supported Obsidian Features
 

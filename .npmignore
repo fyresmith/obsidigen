@@ -21,9 +21,6 @@ tests/
 *.test.ts
 *.spec.ts
 
-# Documentation that's not needed in npm
-LINUX_SERVICE.md
-
 # Build artifacts we don't need
 *.tsbuildinfo
 .cursor/

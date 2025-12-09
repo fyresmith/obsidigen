@@ -11,8 +11,7 @@
     "dist/**/*",
     "public/**/*",
     "README.md",
-    "LICENSE",
-    "LINUX_SERVICE.md"
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsc",
