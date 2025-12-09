@@ -1,8 +1,10 @@
 // Cloudflare Tunnel management
 
 import { spawn, execSync, ChildProcess } from 'child_process';
-import { existsSync, writeFileSync, readFileSync, mkdirSync } from 'fs';
+import { existsSync, writeFileSync, readFileSync, mkdirSync, readdirSync } from 'fs';
 import { join } from 'path';
+import { homedir } from 'os';
+import chalk from 'chalk';
 import { getCloudflaredDir, getGlobalConfig, saveGlobalConfig } from '../config/global.js';
 import { getObsidigenDir, getVaultConfig, updateVaultConfig, getProcessInfo, saveProcessInfo } from '../config/vault.js';
 
@@ -88,6 +90,85 @@ export function isLoggedIn(): boolean {
 }
 
 /**
+ * Find tunnel credentials file for a given tunnel ID
+ */
+function findTunnelCredentials(tunnelId: string): string | null {
+  const cloudflaredDir = join(homedir(), '.cloudflared');
+  
+  if (!existsSync(cloudflaredDir)) {
+    return null;
+  }
+  
+  // Look for credentials file with tunnel ID
+  const credentialsFile = join(cloudflaredDir, `${tunnelId}.json`);
+  
+  if (existsSync(credentialsFile)) {
+    return credentialsFile;
+  }
+  
+  // Also check in subdirectories
+  try {
+    const files = readdirSync(cloudflaredDir);
+    for (const file of files) {
+      if (file.includes(tunnelId) && file.endsWith('.json')) {
+        return join(cloudflaredDir, file);
+      }
+    }
+  } catch {
+    // Ignore errors
+  }
+  
+  return null;
+}
+
+/**
+ * Get list of existing tunnels with details
+ */
+async function getTunnelList(): Promise<Array<{ id: string; name: string; createdAt: string }>> {
+  if (!isCloudflaredInstalled() || !isLoggedIn()) {
+    return [];
+  }
+  
+  return new Promise((resolve) => {
+    const proc = spawn('cloudflared', ['tunnel', 'list', '--output', 'json'], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    
+    let output = '';
+    proc.stdout?.on('data', (data) => {
+      output += data.toString();
+    });
+    
+    proc.on('exit', (code) => {
+      if (code !== 0) {
+        resolve([]);
+        return;
+      }
+      
+      try {
+        const tunnels = JSON.parse(output);
+        resolve(tunnels.map((t: any) => ({
+          id: t.id,
+          name: t.name,
+          createdAt: t.created_at,
+        })));
+      } catch {
+        resolve([]);
+      }
+    });
+  });
+}
+
+/**
+ * Check if a tunnel with the given name exists
+ */
+export async function tunnelExists(tunnelName: string): Promise<string | null> {
+  const tunnels = await getTunnelList();
+  const existing = tunnels.find(t => t.name === tunnelName);
+  return existing ? existing.id : null;
+}
+
+/**
  * Create a new tunnel for a vault
  */
 export async function createTunnel(
@@ -103,6 +184,72 @@ export async function createTunnel(
   if (!isLoggedIn()) {
     console.log('Not logged in. Run: obsidigen tunnel login');
     return null;
+  }
+  
+  // Check if tunnel already exists
+  const existingId = await tunnelExists(tunnelName);
+  if (existingId) {
+    // Tunnel exists, try to use it
+    const credentialsPath = findTunnelCredentials(existingId);
+    if (credentialsPath) {
+      // Found existing tunnel with credentials, save config
+      const vaultConfig = getVaultConfig(vaultPath);
+      const port = vaultConfig?.port || 4000;
+      
+      // Generate hostname
+      const autoHostname = `${tunnelName}.cfargotunnel.com`;
+      const finalHostname = hostname || autoHostname;
+      
+      // Copy credentials to vault directory
+      const obsidigenDir = getObsidigenDir(vaultPath);
+      const vaultCredentialsPath = join(obsidigenDir, TUNNEL_CREDENTIALS_FILE);
+      try {
+        const credentials = readFileSync(credentialsPath, 'utf-8');
+        writeFileSync(vaultCredentialsPath, credentials);
+      } catch (error) {
+        console.error(chalk.yellow('Warning: Could not copy credentials file'));
+      }
+      
+      // Create tunnel config YAML
+      const tunnelConfig = {
+        tunnel: existingId,
+        'credentials-file': vaultCredentialsPath,
+        ingress: [
+          {
+            hostname: finalHostname,
+            service: `http://localhost:${port}`,
+          },
+          {
+            service: 'http_status:404',
+          },
+        ],
+      };
+      
+      const configPath = join(obsidigenDir, TUNNEL_CONFIG_FILE);
+      writeFileSync(configPath, formatYaml(tunnelConfig));
+      
+      // Save to vault config
+      updateVaultConfig(vaultPath, {
+        tunnel: {
+          name: tunnelName,
+          tunnelId: existingId,
+          hostname: finalHostname,
+          credentialsPath: vaultCredentialsPath,
+        },
+      });
+      
+      return { tunnelId: existingId, credentialsPath: vaultCredentialsPath };
+    }
+    // If credentials not found, we need to delete and recreate
+    console.log(chalk.yellow(`\n⚠ Tunnel "${tunnelName}" exists but credentials not found`));
+    console.log(chalk.gray('  Deleting and recreating tunnel...\n'));
+    
+    const deleted = await deleteTunnel(tunnelName);
+    if (!deleted) {
+      console.log(chalk.red('✗ Failed to delete existing tunnel'));
+      console.log(chalk.gray(`  Run: cloudflared tunnel delete ${tunnelName}`));
+      return null;
+    }
   }
   
   const obsidigenDir = getObsidigenDir(vaultPath);
@@ -130,9 +277,12 @@ export async function createTunnel(
       }
       
       // Extract tunnel ID from output
-      const tunnelIdMatch = output.match(/Created tunnel ([a-f0-9-]+)/);
+      // Format: "Created tunnel <name> with id <uuid>"
+      const tunnelIdMatch = output.match(/Created tunnel .+ with id ([a-f0-9-]+)/i) || 
+                           output.match(/tunnel ([a-f0-9-]+)/i);
       if (!tunnelIdMatch) {
         console.error('Could not find tunnel ID in output');
+        console.error('Output was:', output);
         resolve(null);
         return;
       }
@@ -323,7 +473,7 @@ export function getTunnelStatus(vaultPath: string): {
 }
 
 /**
- * List all tunnels
+ * List all tunnels (display to user)
  */
 export async function listTunnels(): Promise<void> {
   if (!isCloudflaredInstalled()) {
@@ -331,7 +481,20 @@ export async function listTunnels(): Promise<void> {
     return;
   }
   
-  execSync('cloudflared tunnel list', { stdio: 'inherit' });
+  const tunnels = await getTunnelList();
+  
+  if (tunnels.length === 0) {
+    console.log(chalk.gray('No tunnels found'));
+    return;
+  }
+  
+  console.log(chalk.bold('\nCloudflare Tunnels:\n'));
+  for (const tunnel of tunnels) {
+    console.log(`  ${chalk.cyan(tunnel.name)}`);
+    console.log(`    ID: ${tunnel.id}`);
+    console.log(`    Created: ${new Date(tunnel.createdAt).toLocaleString()}`);
+    console.log('');
+  }
 }
 
 /**
@@ -343,12 +506,15 @@ export async function deleteTunnel(tunnelName: string): Promise<boolean> {
     return false;
   }
   
-  try {
-    execSync(`cloudflared tunnel delete ${tunnelName}`, { stdio: 'inherit' });
-    return true;
-  } catch {
-    return false;
-  }
+  return new Promise((resolve) => {
+    const proc = spawn('cloudflared', ['tunnel', 'delete', '-f', tunnelName], {
+      stdio: 'inherit',
+    });
+    
+    proc.on('exit', (code) => {
+      resolve(code === 0);
+    });
+  });
 }
 
 /**

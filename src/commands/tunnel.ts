@@ -2,8 +2,9 @@
 
 import chalk from 'chalk';
 import ora from 'ora';
-import { resolve } from 'path';
-import { isInitialized, getVaultConfig } from '../config/vault.js';
+import { resolve, join } from 'path';
+import { existsSync, unlinkSync } from 'fs';
+import { isInitialized, getVaultConfig, updateVaultConfig } from '../config/vault.js';
 import {
   isCloudflaredInstalled,
   getInstallInstructions,
@@ -13,16 +14,19 @@ import {
   startTunnel,
   stopTunnel,
   getTunnelStatus,
+  tunnelExists,
+  deleteTunnel,
 } from '../cloudflare/tunnel.js';
 import { startServer } from '../server/index.js';
 
 interface TunnelOptions {
   name?: string;
   domain?: string;
+  force?: boolean;
 }
 
 export async function tunnelCommand(
-  action: 'login' | 'create' | 'start' | 'stop' | 'status',
+  action: 'login' | 'create' | 'start' | 'stop' | 'status' | 'delete',
   options: TunnelOptions = {}
 ): Promise<void> {
   const vaultPath = resolve(process.cwd());
@@ -49,6 +53,9 @@ export async function tunnelCommand(
       break;
     case 'status':
       handleStatus(vaultPath);
+      break;
+    case 'delete':
+      await handleDelete(vaultPath);
       break;
   }
 }
@@ -90,13 +97,24 @@ async function handleCreate(vaultPath: string, options: TunnelOptions): Promise<
   
   const vaultConfig = getVaultConfig(vaultPath);
   
-  // Check if tunnel already exists
+  // Check if tunnel already exists and if we're changing the hostname
   if (vaultConfig?.tunnel?.tunnelId) {
-    console.log(chalk.yellow('⚠ A tunnel already exists for this vault'));
-    console.log(`  Name: ${vaultConfig.tunnel.name}`);
-    console.log(`  Hostname: ${vaultConfig.tunnel.hostname}`);
-    console.log(chalk.gray('\n  Delete the existing tunnel first to create a new one'));
-    return;
+    const currentHostname = vaultConfig.tunnel.hostname;
+    const newHostname = options.domain;
+    
+    // If they're trying to set a different hostname, allow reconfiguration
+    if (newHostname && currentHostname !== newHostname) {
+      console.log(chalk.yellow('⚠ Updating tunnel configuration'));
+      console.log(`  Current hostname: ${currentHostname}`);
+      console.log(`  New hostname:     ${newHostname}\n`);
+      // Continue with reconfiguration
+    } else if (!options.force) {
+      console.log(chalk.yellow('⚠ A tunnel already exists for this vault'));
+      console.log(`  Name: ${vaultConfig.tunnel.name}`);
+      console.log(`  Hostname: ${vaultConfig.tunnel.hostname}`);
+      console.log(chalk.gray('\n  Use --force to reconfigure, or delete the tunnel first'));
+      return;
+    }
   }
   
   // Get tunnel name
@@ -105,12 +123,19 @@ async function handleCreate(vaultPath: string, options: TunnelOptions): Promise<
   
   console.log(chalk.bold('\nCreating Cloudflare Tunnel\n'));
   
-  const spinner = ora(`Creating tunnel "${sanitizedName}"...`).start();
+  // Check if tunnel exists in Cloudflare first
+  const existingId = await tunnelExists(sanitizedName);
+  if (existingId) {
+    console.log(chalk.yellow(`⚠ Tunnel "${sanitizedName}" already exists in your Cloudflare account`));
+    console.log(chalk.gray('  Using existing tunnel...\n'));
+  }
+  
+  const spinner = ora(`${existingId ? 'Configuring' : 'Creating'} tunnel "${sanitizedName}"...`).start();
   
   const result = await createTunnel(vaultPath, sanitizedName, options.domain);
   
   if (result) {
-    spinner.succeed(`Tunnel "${sanitizedName}" created`);
+    spinner.succeed(`Tunnel "${sanitizedName}" ${existingId ? 'configured' : 'created'}`);
     
     const config = getVaultConfig(vaultPath);
     
@@ -220,6 +245,74 @@ function handleStatus(vaultPath: string): void {
     }
   }
   
+  console.log('');
+}
+
+async function handleDelete(vaultPath: string): Promise<void> {
+  if (!isInitialized(vaultPath)) {
+    console.log(chalk.red('✗ This directory is not initialized'));
+    process.exit(1);
+  }
+  
+  const vaultConfig = getVaultConfig(vaultPath);
+  
+  if (!vaultConfig?.tunnel?.tunnelId) {
+    console.log(chalk.yellow('⚠ No tunnel configured for this vault'));
+    return;
+  }
+  
+  const tunnelName = vaultConfig.tunnel.name;
+  const tunnelId = vaultConfig.tunnel.tunnelId;
+  
+  console.log('');
+  console.log(chalk.bold('Deleting Tunnel'));
+  console.log('');
+  console.log(`  Name:      ${chalk.cyan(tunnelName)}`);
+  console.log(`  Tunnel ID: ${chalk.gray(tunnelId)}`);
+  console.log('');
+  
+  // Stop tunnel if running
+  const status = getTunnelStatus(vaultPath);
+  if (status.running) {
+    const stopSpinner = ora('Stopping tunnel...').start();
+    stopTunnel(vaultPath);
+    stopSpinner.succeed('Tunnel stopped');
+  }
+  
+  // Delete from Cloudflare
+  const deleteSpinner = ora('Deleting tunnel from Cloudflare...').start();
+  const deleted = await deleteTunnel(tunnelName);
+  
+  if (!deleted) {
+    deleteSpinner.fail('Failed to delete tunnel from Cloudflare');
+    console.log(chalk.gray('  You may need to delete it manually:'));
+    console.log(chalk.gray(`  cloudflared tunnel delete ${tunnelName}`));
+  } else {
+    deleteSpinner.succeed('Tunnel deleted from Cloudflare');
+  }
+  
+  // Clean up local files
+  const obsidigenDir = join(vaultPath, '.obsidigen');
+  const filesToDelete = [
+    join(obsidigenDir, 'tunnel.json'),
+    join(obsidigenDir, 'tunnel.yml'),
+  ];
+  
+  for (const file of filesToDelete) {
+    if (existsSync(file)) {
+      try {
+        unlinkSync(file);
+      } catch (error) {
+        console.log(chalk.yellow(`⚠ Could not delete ${file}`));
+      }
+    }
+  }
+  
+  // Update vault config
+  updateVaultConfig(vaultPath, { tunnel: undefined });
+  
+  console.log('');
+  console.log(chalk.green('✔ Tunnel configuration removed'));
   console.log('');
 }
 

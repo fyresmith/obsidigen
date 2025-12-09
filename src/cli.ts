@@ -69,6 +69,7 @@ tunnel
   .description('Create a tunnel for this vault')
   .option('-n, --name <name>', 'Tunnel name')
   .option('-d, --domain <domain>', 'Custom domain (optional)')
+  .option('-f, --force', 'Force reconfigure existing tunnel')
   .action((options) => tunnelCommand('create', options));
 
 tunnel
@@ -85,6 +86,11 @@ tunnel
   .command('status')
   .description('Show tunnel status')
   .action((options) => tunnelCommand('status', options));
+
+tunnel
+  .command('delete')
+  .description('Delete the tunnel and remove configuration')
+  .action((options) => tunnelCommand('delete', options));
 
 // Access commands
 const access = program
