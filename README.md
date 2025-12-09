@@ -4,13 +4,13 @@ Render your Obsidian vaults as beautiful web wikis with Cloudflare Tunnel integr
 
 ## Features
 
-- 📝 **Full Obsidian Support** - Wiki links, backlinks, aliases, frontmatter
-- 🔍 **Search** - Fast, fuzzy search across all pages
-- 🔗 **Backlinks** - Automatic backlink tracking
-- 🌐 **Cloudflare Tunnel** - Secure public access via tunnels
-- 🔐 **Cloudflare Access** - Zero-trust authentication
-- 🔄 **Live Reload** - Automatic updates when files change
-- 🚀 **Boot Service** - Run as a system service on macOS
+- **Full Obsidian Support** - Wiki links, backlinks, aliases, frontmatter
+- **Search** - Fast, fuzzy search across all pages
+- **Backlinks** - Automatic backlink tracking
+- **Cloudflare Tunnel** - Secure public access via tunnels
+- **Cloudflare Access** - Zero-trust authentication
+- **Live Reload** - Automatic updates when files change
+- **Boot Service** - Run as a system service (macOS & Linux)
 
 ## Installation
 
@@ -144,29 +144,55 @@ obsidigen access setup
 
 ## Run on Boot
 
-Register your vault(s) to start automatically on login:
+Register your vault(s) to start automatically on login (supports macOS and Linux):
 
 ```bash
 cd /path/to/vault
 obsidigen service install
 ```
 
+### Service Management
+
+| Command | Description |
+|---------|-------------|
+| `obsidigen service install` | Register vault for autostart |
+| `obsidigen service remove` | Unregister vault |
+| `obsidigen service start` | Start the daemon |
+| `obsidigen service stop` | Stop the daemon |
+| `obsidigen service list` | Show registered vaults and status |
+
+**Platform Support:**
+- **macOS**: Uses launchd (`~/Library/LaunchAgents/com.obsidigen.daemon.plist`)
+- **Linux**: Uses systemd (`~/.config/systemd/user/obsidigen-daemon.service`)
+
+**View Logs:**
+```bash
+# macOS
+tail -f ~/.obsidigen/daemon.log
+
+# Linux
+journalctl --user -u obsidigen-daemon -f
+```
+
 ## Supported Obsidian Features
 
-- ✅ Wiki links `[[Page]]`
-- ✅ Wiki links with aliases `[[Page|Display Text]]`
-- ✅ Frontmatter aliases
-- ✅ YAML frontmatter
-- ✅ Headers and anchors
-- ✅ Highlights `==text==`
-- ✅ Callouts `> [!note]`
-- ✅ Code blocks
-- ✅ Tables
-- ✅ Images
-- 🔜 Embeds `![[Page]]`
-- 🔜 Canvas files
-- 🔜 Mermaid diagrams
-- 🔜 Math (LaTeX)
+**Implemented:**
+- Wiki links `[[Page]]`
+- Wiki links with aliases `[[Page|Display Text]]`
+- Frontmatter aliases
+- YAML frontmatter
+- Headers and anchors
+- Highlights `==text==`
+- Callouts `> [!note]`
+- Code blocks
+- Tables
+- Images
+
+**Planned:**
+- Embeds `![[Page]]`
+- Canvas files
+- Mermaid diagrams
+- Math (LaTeX)
 
 ## Development
 

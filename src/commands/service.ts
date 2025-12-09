@@ -1,10 +1,10 @@
-// obsidigen service commands
+// obsidigen service commands - cross-platform
 
 import chalk from 'chalk';
 import ora from 'ora';
 import { resolve, join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
-import { homedir } from 'os';
+import { homedir, platform } from 'os';
 import { execSync } from 'child_process';
 import { isInitialized, getVaultConfig } from '../config/vault.js';
 import { 
@@ -12,46 +12,84 @@ import {
   registerVault, 
   unregisterVault, 
   getRegisteredVaults,
-  getGlobalConfig,
-  saveGlobalConfig,
 } from '../config/global.js';
+
+// macOS (launchd) support
 import {
   generatePlist,
-  getPlistPath,
   plistExists,
   writePlist,
   removePlist,
-  loadService,
-  unloadService,
-  isServiceLoaded,
-  startService,
-  stopService,
-  getServiceStatus,
+  loadService as loadLaunchdService,
+  unloadService as unloadLaunchdService,
+  isServiceLoaded as isLaunchdServiceLoaded,
+  startService as startLaunchdService,
+  stopService as stopLaunchdService,
+  getServiceStatus as getLaunchdServiceStatus,
 } from '../utils/plist.js';
+
+// Linux (systemd) support
+import {
+  generateSystemdService,
+  systemdServiceExists,
+  writeSystemdService,
+  removeSystemdService,
+  enableSystemdService,
+  disableSystemdService,
+  startSystemdService,
+  stopSystemdService,
+  isSystemdServiceActive,
+  isSystemdServiceEnabled,
+  getSystemdServiceStatus,
+  isSystemdAvailable,
+} from '../utils/systemd.js';
+
+type Platform = 'darwin' | 'linux' | 'unknown';
+
+function getPlatform(): Platform {
+  const p = platform();
+  if (p === 'darwin') return 'darwin';
+  if (p === 'linux') return 'linux';
+  return 'unknown';
+}
 
 export async function serviceCommand(
   action: 'install' | 'remove' | 'start' | 'stop' | 'list'
 ): Promise<void> {
+  const currentPlatform = getPlatform();
+  
+  if (currentPlatform === 'unknown') {
+    console.log(chalk.red('✗ Unsupported platform'));
+    console.log(chalk.gray('  Service management is only available on macOS and Linux'));
+    process.exit(1);
+  }
+  
+  if (currentPlatform === 'linux' && !isSystemdAvailable()) {
+    console.log(chalk.red('✗ systemd not available'));
+    console.log(chalk.gray('  Linux service management requires systemd'));
+    process.exit(1);
+  }
+  
   switch (action) {
     case 'install':
-      await handleInstall();
+      await handleInstall(currentPlatform);
       break;
     case 'remove':
-      await handleRemove();
+      await handleRemove(currentPlatform);
       break;
     case 'start':
-      await handleStart();
+      await handleStart(currentPlatform);
       break;
     case 'stop':
-      await handleStop();
+      await handleStop(currentPlatform);
       break;
     case 'list':
-      await handleList();
+      await handleList(currentPlatform);
       break;
   }
 }
 
-async function handleInstall(): Promise<void> {
+async function handleInstall(platform: Platform): Promise<void> {
   const vaultPath = resolve(process.cwd());
   
   if (!isInitialized(vaultPath)) {
@@ -79,34 +117,14 @@ async function handleInstall(): Promise<void> {
       autostart: true,
     });
     
-    // Ensure LaunchAgents directory exists
-    const launchAgentsDir = join(homedir(), 'Library', 'LaunchAgents');
-    if (!existsSync(launchAgentsDir)) {
-      mkdirSync(launchAgentsDir, { recursive: true });
-    }
-    
     // Find obsidigen binary
     const obsidigenPath = getObsidigenPath();
     
-    // Generate and write plist
-    const plist = generatePlist({
-      label: 'com.obsidigen.daemon',
-      program: obsidigenPath,
-      programArguments: [obsidigenPath, 'daemon'],
-      runAtLoad: true,
-      keepAlive: true,
-      standardOutPath: join(getGlobalDir(), 'daemon.log'),
-      standardErrorPath: join(getGlobalDir(), 'daemon.error.log'),
-      workingDirectory: homedir(),
-    });
-    
-    writePlist(plist);
-    
-    // Load the service
-    if (isServiceLoaded()) {
-      unloadService();
+    if (platform === 'darwin') {
+      await installMacOSService(obsidigenPath);
+    } else if (platform === 'linux') {
+      await installLinuxService(obsidigenPath);
     }
-    loadService();
     
     spinner.succeed('Service installed');
     
@@ -127,7 +145,49 @@ async function handleInstall(): Promise<void> {
   }
 }
 
-async function handleRemove(): Promise<void> {
+async function installMacOSService(obsidigenPath: string): Promise<void> {
+  // Ensure LaunchAgents directory exists
+  const launchAgentsDir = join(homedir(), 'Library', 'LaunchAgents');
+  if (!existsSync(launchAgentsDir)) {
+    mkdirSync(launchAgentsDir, { recursive: true });
+  }
+  
+  // Generate and write plist
+  const plist = generatePlist({
+    label: 'com.obsidigen.daemon',
+    program: obsidigenPath,
+    programArguments: [obsidigenPath, 'daemon'],
+    runAtLoad: true,
+    keepAlive: true,
+    standardOutPath: join(getGlobalDir(), 'daemon.log'),
+    standardErrorPath: join(getGlobalDir(), 'daemon.error.log'),
+    workingDirectory: homedir(),
+  });
+  
+  writePlist(plist);
+  
+  // Load the service
+  if (isLaunchdServiceLoaded()) {
+    unloadLaunchdService();
+  }
+  loadLaunchdService();
+}
+
+async function installLinuxService(obsidigenPath: string): Promise<void> {
+  // Generate systemd service
+  const serviceContent = generateSystemdService({
+    description: 'Obsidigen Wiki Daemon',
+    execStart: `${obsidigenPath} daemon`,
+    workingDirectory: homedir(),
+    restart: 'on-failure',
+    restartSec: 5,
+  });
+  
+  writeSystemdService(serviceContent);
+  enableSystemdService();
+}
+
+async function handleRemove(platform: Platform): Promise<void> {
   const vaultPath = resolve(process.cwd());
   
   if (!isInitialized(vaultPath)) {
@@ -151,10 +211,18 @@ async function handleRemove(): Promise<void> {
     
     if (vaults.length === 0) {
       // No more vaults, remove the service entirely
-      if (isServiceLoaded()) {
-        unloadService();
+      if (platform === 'darwin') {
+        if (isLaunchdServiceLoaded()) {
+          unloadLaunchdService();
+        }
+        removePlist();
+      } else if (platform === 'linux') {
+        if (isSystemdServiceActive()) {
+          stopSystemdService();
+        }
+        disableSystemdService();
+        removeSystemdService();
       }
-      removePlist();
       spinner.succeed('Service removed (no more vaults registered)');
     } else {
       spinner.succeed('Vault removed from service');
@@ -168,8 +236,10 @@ async function handleRemove(): Promise<void> {
   }
 }
 
-async function handleStart(): Promise<void> {
-  if (!plistExists()) {
+async function handleStart(platform: Platform): Promise<void> {
+  const serviceExists = platform === 'darwin' ? plistExists() : systemdServiceExists();
+  
+  if (!serviceExists) {
     console.log(chalk.red('✗ Service not installed'));
     console.log(chalk.gray('  Run `obsidigen service install` first'));
     process.exit(1);
@@ -178,19 +248,33 @@ async function handleStart(): Promise<void> {
   const spinner = ora('Starting service...').start();
   
   try {
-    if (!isServiceLoaded()) {
-      loadService();
+    if (platform === 'darwin') {
+      if (!isLaunchdServiceLoaded()) {
+        loadLaunchdService();
+      }
+      startLaunchdService();
+    } else if (platform === 'linux') {
+      startSystemdService();
     }
-    
-    startService();
     
     // Wait a moment and check status
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    const status = getServiceStatus();
+    let isRunning = false;
+    let pid: number | undefined;
     
-    if (status.running) {
-      spinner.succeed(`Service started (PID: ${status.pid})`);
+    if (platform === 'darwin') {
+      const status = getLaunchdServiceStatus();
+      isRunning = status.running;
+      pid = status.pid;
+    } else {
+      const status = getSystemdServiceStatus();
+      isRunning = status.active;
+      pid = status.pid;
+    }
+    
+    if (isRunning) {
+      spinner.succeed(`Service started${pid ? ` (PID: ${pid})` : ''}`);
       
       // Show registered vaults
       const vaults = getRegisteredVaults().filter(v => v.autostart);
@@ -203,7 +287,10 @@ async function handleStart(): Promise<void> {
       }
     } else {
       spinner.warn('Service started but may not be running');
-      console.log(chalk.gray('  Check logs at ~/.obsidigen/daemon.log'));
+      const logPath = platform === 'darwin' 
+        ? '~/.obsidigen/daemon.log' 
+        : 'journalctl --user -u obsidigen-daemon';
+      console.log(chalk.gray(`  Check logs: ${logPath}`));
     }
     
   } catch (error) {
@@ -213,8 +300,10 @@ async function handleStart(): Promise<void> {
   }
 }
 
-async function handleStop(): Promise<void> {
-  if (!plistExists()) {
+async function handleStop(platform: Platform): Promise<void> {
+  const serviceExists = platform === 'darwin' ? plistExists() : systemdServiceExists();
+  
+  if (!serviceExists) {
     console.log(chalk.yellow('⚠ Service not installed'));
     return;
   }
@@ -222,7 +311,11 @@ async function handleStop(): Promise<void> {
   const spinner = ora('Stopping service...').start();
   
   try {
-    stopService();
+    if (platform === 'darwin') {
+      stopLaunchdService();
+    } else if (platform === 'linux') {
+      stopSystemdService();
+    }
     spinner.succeed('Service stopped');
   } catch (error) {
     spinner.fail('Failed to stop service');
@@ -230,18 +323,38 @@ async function handleStop(): Promise<void> {
   }
 }
 
-async function handleList(): Promise<void> {
+async function handleList(platform: Platform): Promise<void> {
+  let isRunning = false;
+  let isLoaded = false;
+  let pid: number | undefined;
+  let enabled: boolean | undefined;
+  
+  if (platform === 'darwin') {
+    const status = getLaunchdServiceStatus();
+    isRunning = status.running;
+    isLoaded = status.loaded;
+    pid = status.pid;
+  } else {
+    const status = getSystemdServiceStatus();
+    isRunning = status.active;
+    isLoaded = status.loaded;
+    pid = status.pid;
+    enabled = status.enabled;
+  }
+  
   const vaults = getRegisteredVaults();
-  const status = getServiceStatus();
   
   console.log('');
   console.log(chalk.bold('Obsidigen Service'));
   console.log('');
   
-  if (status.loaded) {
-    console.log(`  Status:  ${status.running ? chalk.green('● Running') : chalk.yellow('○ Stopped')}`);
-    if (status.pid) {
-      console.log(`  PID:     ${status.pid}`);
+  if (isLoaded) {
+    console.log(`  Status:  ${isRunning ? chalk.green('● Running') : chalk.yellow('○ Stopped')}`);
+    if (pid) {
+      console.log(`  PID:     ${pid}`);
+    }
+    if (platform === 'linux' && enabled !== undefined) {
+      console.log(`  Enabled: ${enabled ? 'Yes' : 'No'}`);
     }
   } else {
     console.log(`  Status:  ${chalk.gray('○ Not installed')}`);
@@ -275,15 +388,18 @@ function getObsidigenPath(): string {
     return result.trim();
   } catch {
     // Fallback to npm global path
-    const npmRoot = execSync('npm root -g', { encoding: 'utf-8' }).trim();
-    const possiblePath = join(npmRoot, 'obsidigen', 'dist', 'cli.js');
-    
-    if (existsSync(possiblePath)) {
-      return process.execPath + ' ' + possiblePath;
+    try {
+      const npmRoot = execSync('npm root -g', { encoding: 'utf-8' }).trim();
+      const possiblePath = join(npmRoot, 'obsidigen', 'dist', 'cli.js');
+      
+      if (existsSync(possiblePath)) {
+        return `${process.execPath} ${possiblePath}`;
+      }
+    } catch {
+      // Ignore
     }
     
     // Last resort - use node to run from current location
-    return process.argv[1];
+    return `${process.execPath} ${process.argv[1]}`;
   }
 }
-
