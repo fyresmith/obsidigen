@@ -2,6 +2,7 @@
 
 export interface VaultConfig {
   name: string;
+  title?: string;  // Custom display title (defaults to name)
   port: number;
   vaultPath: string;
   createdAt: string;

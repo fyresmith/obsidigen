@@ -9,7 +9,6 @@ Render your Obsidian vaults as beautiful web wikis with Cloudflare Tunnel integr
 - **Tree Navigation** - Collapsible folder structure with current page highlighting
 - **Smart Widgets** - Properties display, table of contents with scroll spy, backlinks
 - **Hover Previews** - Preview page content by hovering over any wiki link
-- **Light/Dark Themes** - Toggle between themes with localStorage persistence
 - **Responsive Design** - Mobile-friendly with slide-out navigation panels
 - **Live Search** - Fast search with keyboard shortcuts (⌘K / Ctrl+K)
 
@@ -18,6 +17,11 @@ Render your Obsidian vaults as beautiful web wikis with Cloudflare Tunnel integr
 - **Backlink Tracking** - Automatic bidirectional links between pages
 - **Properties Display** - View frontmatter metadata including tags
 - **Live Reload** - Automatic updates when files change
+
+### Customization
+- **Custom Title** - Set a custom display title via config
+- **Custom Favicon** - Place any favicon image in vault root
+- **Theme Toggle** - Light/dark mode with localStorage persistence
 
 ### Deployment
 - **Cloudflare Tunnel** - Secure public access via tunnels
@@ -128,7 +132,23 @@ Obsidigen features a clean, three-column wiki layout:
 | `obsidigen start -d` | Start as background daemon |
 | `obsidigen stop` | Stop the server |
 | `obsidigen status` | Show server status |
-| `obsidigen config` | View/edit configuration |
+| `obsidigen config` | View configuration |
+| `obsidigen config --edit` | Edit configuration in editor |
+| `obsidigen config --set key=value` | Set configuration value |
+| `obsidigen config --get key` | Get configuration value |
+
+#### Configuration Examples
+
+```bash
+# Set a custom title for your wiki
+obsidigen config --set title="My Personal Wiki"
+
+# Change the port
+obsidigen config --set port=4001
+
+# Get the current title
+obsidigen config --get title
+```
 
 ### Cloudflare Tunnel
 
@@ -156,6 +176,50 @@ Obsidigen features a clean, three-column wiki layout:
 | `obsidigen service stop` | Stop the daemon |
 | `obsidigen service list` | List registered vaults |
 
+## Customization
+
+### Custom Title
+
+Set a custom display title for your wiki (different from the vault name):
+
+```bash
+obsidigen config --set title="My Personal Knowledge Base"
+```
+
+The title appears in:
+- Browser tab title
+- Site header
+- Page titles
+
+If not set, defaults to the vault name (folder name).
+
+### Custom Favicon
+
+Place a favicon file in your vault's root directory with one of these names:
+- `favicon.ico` (recommended)
+- `favicon.png`
+- `favicon.svg`
+- `favicon.jpg`
+- `favicon.jpeg`
+- `favicon.gif`
+
+The favicon will automatically be detected and served. Supported formats:
+- **ICO**: Standard favicon format, works everywhere
+- **PNG**: Modern format with transparency support
+- **SVG**: Scalable vector graphics (great for simple logos)
+- **JPG/JPEG**: Photo-based favicons
+- **GIF**: Animated favicons (if you're feeling adventurous!)
+
+**Example:**
+```bash
+# Copy your favicon to the vault root
+cp ~/my-logo.png /path/to/vault/favicon.png
+
+# Restart the server to see changes
+obsidigen stop
+obsidigen start
+```
+
 ## Configuration
 
 Configuration is stored in `.obsidigen/config.json`:
@@ -163,6 +227,7 @@ Configuration is stored in `.obsidigen/config.json`:
 ```json
 {
   "name": "my-wiki",
+  "title": "My Personal Wiki",
   "port": 4000,
   "vaultPath": "/path/to/vault",
   "tunnel": {
@@ -175,6 +240,14 @@ Configuration is stored in `.obsidigen/config.json`:
   }
 }
 ```
+
+**Configuration Fields:**
+- `name` - Internal identifier (usually folder name)
+- `title` - Display title shown in UI and browser (optional, defaults to `name`)
+- `port` - Local server port
+- `vaultPath` - Absolute path to vault directory
+- `tunnel` - Cloudflare Tunnel configuration (optional)
+- `access` - Cloudflare Access configuration (optional)
 
 ## Cloudflare Setup
 

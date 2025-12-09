@@ -10,6 +10,7 @@ import { searchRoutes } from './routes/search.js';
 import { graphRoutes } from './routes/graph.js';
 import { treeRoutes } from './routes/tree.js';
 import { previewRoutes } from './routes/preview.js';
+import { staticRoutes } from './routes/static.js';
 import chalk from 'chalk';
 
 export interface ServerContext {
@@ -39,6 +40,9 @@ export async function startServer(vaultPath: string, port: number): Promise<void
   
   // Static files (CSS, JS)
   app.use('/static/*', serveStatic({ root: './public' }));
+  
+  // Static routes (favicon, etc)
+  app.route('/', staticRoutes);
   
   // API routes
   app.route('/api/search', searchRoutes);

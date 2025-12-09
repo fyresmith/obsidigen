@@ -52,7 +52,7 @@ wikiRoutes.get('/', async (c) => {
   const vaultIndex = c.get('vaultIndex');
   const vaultPath = c.get('vaultPath');
   const config = getVaultConfig(vaultPath);
-  const vaultName = config?.name || 'Wiki';
+  const vaultName = config?.title || config?.name || 'Wiki';
   
   // Find landing page
   const landingPage = findLandingPage(vaultIndex);
@@ -95,7 +95,7 @@ wikiRoutes.get('/:slug{.+}', async (c) => {
   const vaultPath = c.get('vaultPath');
   const slug = c.req.param('slug');
   const config = getVaultConfig(vaultPath);
-  const vaultName = config?.name || 'Wiki';
+  const vaultName = config?.title || config?.name || 'Wiki';
   
   // Try to find the page
   const page = vaultIndex.getPage(slug);
