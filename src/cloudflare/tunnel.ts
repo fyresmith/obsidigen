@@ -205,9 +205,17 @@ export async function createTunnel(
       const vaultCredentialsPath = join(obsidigenDir, TUNNEL_CREDENTIALS_FILE);
       try {
         const credentials = readFileSync(credentialsPath, 'utf-8');
-        writeFileSync(vaultCredentialsPath, credentials);
+        writeFileSync(vaultCredentialsPath, credentials, { mode: 0o600 });
+        
+        // Verify the file was written
+        if (!existsSync(vaultCredentialsPath)) {
+          console.error(chalk.red('✗ Failed to write credentials file'));
+          console.error(chalk.gray(`  Target: ${vaultCredentialsPath}`));
+          return null;
+        }
       } catch (error) {
-        console.error(chalk.yellow('Warning: Could not copy credentials file'));
+        console.error(chalk.red('✗ Could not copy credentials file:'), error);
+        return null;
       }
       
       // Create tunnel config YAML
@@ -299,12 +307,26 @@ export async function createTunnel(
       const vaultCredentialsPath = join(obsidigenDir, TUNNEL_CREDENTIALS_FILE);
       
       try {
-        if (existsSync(defaultCredentialsPath)) {
-          const credentials = readFileSync(defaultCredentialsPath, 'utf-8');
-          writeFileSync(vaultCredentialsPath, credentials);
+        if (!existsSync(defaultCredentialsPath)) {
+          console.error(chalk.red('✗ Credentials file not found'));
+          console.error(chalk.gray(`  Expected at: ${defaultCredentialsPath}`));
+          resolve(null);
+          return;
+        }
+        const credentials = readFileSync(defaultCredentialsPath, 'utf-8');
+        writeFileSync(vaultCredentialsPath, credentials, { mode: 0o600 });
+        
+        // Verify the file was written
+        if (!existsSync(vaultCredentialsPath)) {
+          console.error(chalk.red('✗ Failed to write credentials file'));
+          console.error(chalk.gray(`  Target: ${vaultCredentialsPath}`));
+          resolve(null);
+          return;
         }
       } catch (error) {
-        console.error('Warning: Could not copy credentials file');
+        console.error(chalk.red('✗ Could not copy credentials file:'), error);
+        resolve(null);
+        return;
       }
       
       // Create tunnel config
@@ -375,21 +397,57 @@ export async function startTunnel(vaultPath: string): Promise<boolean> {
   
   const obsidigenDir = getObsidigenDir(vaultPath);
   const configPath = join(obsidigenDir, TUNNEL_CONFIG_FILE);
+  const credentialsPath = join(obsidigenDir, TUNNEL_CREDENTIALS_FILE);
   
   if (!existsSync(configPath)) {
     console.log('Tunnel config not found. Run: obsidigen tunnel create');
     return false;
   }
   
+  // Verify credentials file exists before starting
+  if (!existsSync(credentialsPath)) {
+    console.error(chalk.red('✗ Tunnel credentials file not found'));
+    console.error(chalk.gray(`  Expected at: ${credentialsPath}`));
+    console.error(chalk.gray('  Run: obsidigen tunnel create'));
+    return false;
+  }
+  
   return new Promise((resolve) => {
+    let hasError = false;
+    
     tunnelProcess = spawn('cloudflared', ['tunnel', '--config', configPath, 'run'], {
-      stdio: 'inherit',
+      stdio: ['inherit', 'pipe', 'pipe'],
       detached: false,
+    });
+    
+    // Capture output to detect errors
+    let output = '';
+    tunnelProcess.stdout?.on('data', (data) => {
+      output += data.toString();
+      process.stdout.write(data);
+    });
+    
+    tunnelProcess.stderr?.on('data', (data) => {
+      const text = data.toString();
+      output += text;
+      process.stderr.write(data);
+      
+      // Check for credential errors
+      if (text.includes('credentials file') && text.includes('not')) {
+        hasError = true;
+      }
     });
     
     tunnelProcess.on('error', (error) => {
       console.error('Tunnel error:', error);
+      hasError = true;
       resolve(false);
+    });
+    
+    tunnelProcess.on('exit', (code) => {
+      if (code !== 0) {
+        hasError = true;
+      }
     });
     
     // Save tunnel PID
@@ -403,15 +461,16 @@ export async function startTunnel(vaultPath: string): Promise<boolean> {
       }
     }
     
-    // Give it a moment to start
+    // Give it a moment to start, then verify
     setTimeout(() => {
-      if (tunnelProcess && !tunnelProcess.killed) {
+      if (hasError || !tunnelProcess || tunnelProcess.killed) {
+        console.error(chalk.red('\n✗ Tunnel failed to start'));
+        resolve(false);
+      } else {
         console.log(`\nTunnel running at: https://${vaultConfig.tunnel?.hostname}`);
         resolve(true);
-      } else {
-        resolve(false);
       }
-    }, 2000);
+    }, 3000);
   });
 }
 
