@@ -103,9 +103,11 @@ body {
 
 .wiki-layout {
   display: grid;
-  grid-template-columns: var(--sidebar-width) 1fr var(--backlinks-width);
+  grid-template-columns: var(--sidebar-width) minmax(0, 800px) var(--backlinks-width);
+  justify-content: center;
   height: 100vh;
   overflow: hidden;
+  background: var(--bg-primary);
 }
 
 /* ============================================
@@ -113,8 +115,7 @@ body {
    ============================================ */
 
 .sidebar-left {
-  background: var(--bg-secondary);
-  border-right: 1px solid var(--border-subtle);
+  background: var(--bg-primary);
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -123,7 +124,6 @@ body {
 
 .sidebar-header {
   padding: 1.25rem 1rem;
-  border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0;
 }
 
@@ -360,7 +360,9 @@ body {
 .content-area {
   height: 100vh;
   overflow-y: auto;
-  background: var(--bg-primary);
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--border-subtle);
+  border-right: 1px solid var(--border-subtle);
 }
 
 .content-area::-webkit-scrollbar {
@@ -381,42 +383,27 @@ body {
 }
 
 .content-wrapper {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 3rem 2.5rem;
+  padding: 2.5rem 3rem;
 }
 
 /* Article */
 .article {
-  background: var(--bg-secondary);
-  border-radius: 12px;
-  padding: 2.5rem;
-  border: 1px solid var(--border-subtle);
-  box-shadow: 0 1px 3px var(--shadow);
+  /* Clean wiki style - no card */
 }
 
 .article-header {
-  margin-bottom: 2rem;
-  padding-bottom: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
   border-bottom: 1px solid var(--border-subtle);
 }
 
 .article-title {
-  font-size: 2rem;
+  font-size: 2.25rem;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 0.5rem;
   font-family: var(--font-serif);
   letter-spacing: -0.02em;
-  line-height: 1.25;
-}
-
-.article-meta {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
+  line-height: 1.2;
 }
 
 /* Markdown Content */
@@ -593,11 +580,10 @@ body {
    ============================================ */
 
 .sidebar-right {
-  background: var(--bg-secondary);
-  border-left: 1px solid var(--border-subtle);
+  background: var(--bg-primary);
   height: 100vh;
   overflow-y: auto;
-  padding: 1rem 0.75rem;
+  padding: 1.25rem 1rem;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -976,6 +962,13 @@ body {
   opacity: 1;
 }
 
+@media (max-width: 1280px) {
+  .wiki-layout {
+    grid-template-columns: var(--sidebar-width) 1fr var(--backlinks-width);
+    justify-content: stretch;
+  }
+}
+
 @media (max-width: 1024px) {
   .wiki-layout {
     grid-template-columns: var(--sidebar-width) 1fr;
@@ -991,10 +984,13 @@ body {
     z-index: 1001;
     transform: translateX(100%);
     transition: transform 0.25s ease;
+    background: var(--bg-secondary);
+    border-left: 1px solid var(--border-subtle);
   }
   
   .sidebar-right.mobile-open {
-    display: block;
+    display: flex;
+    flex-direction: column;
     transform: translateX(0);
   }
 }
@@ -1018,6 +1014,8 @@ body {
     z-index: 1001;
     transform: translateX(-100%);
     transition: transform 0.25s ease;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border-subtle);
   }
   
   .sidebar-left.mobile-open {
@@ -1027,19 +1025,16 @@ body {
   
   .content-area {
     padding-top: 56px;
+    border-left: none;
+    border-right: none;
   }
   
   .content-wrapper {
-    padding: 1.5rem 1rem;
-  }
-  
-  .article {
-    padding: 1.5rem;
-    border-radius: 8px;
+    padding: 1.5rem 1.25rem;
   }
   
   .article-title {
-    font-size: 1.6rem;
+    font-size: 1.75rem;
   }
 }
 
@@ -1048,12 +1043,12 @@ body {
    ============================================ */
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.article {
-  animation: fadeIn 0.3s ease;
+.content-wrapper {
+  animation: fadeIn 0.2s ease;
 }
 `;
 
