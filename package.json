@@ -1,6 +1,6 @@
 {
   "name": "obsidigen",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Transform your Obsidian vault into a beautiful, browsable wiki with a modern three-column interface, hover previews, and optional Cloudflare Tunnel integration",
   "type": "module",
   "main": "dist/cli.js",
