@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Obsidigen local config (per-vault)
+.obsidigen/
+
+# Logs
+*.log
+
+# npm
+npm-debug.log*
+
+# Environment variables
+.env
+.env.local
+
