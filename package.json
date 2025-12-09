@@ -11,7 +11,11 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "node dist/cli.js",
-    "link": "npm run build && npm link"
+    "link": "npm run build && npm link",
+    "prepublishOnly": "npm run build",
+    "release:patch": "npm version patch && git push origin --tags",
+    "release:minor": "npm version minor && git push origin --tags",
+    "release:major": "npm version major && git push origin --tags"
   },
   "keywords": [
     "obsidian",
