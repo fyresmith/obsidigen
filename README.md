@@ -4,12 +4,23 @@ Render your Obsidian vaults as beautiful web wikis with Cloudflare Tunnel integr
 
 ## Features
 
+### Wiki Interface
+- **Three-Column Layout** - Navigation tree, content, and widgets panel
+- **Tree Navigation** - Collapsible folder structure with current page highlighting
+- **Smart Widgets** - Properties display, table of contents with scroll spy, backlinks
+- **Light/Dark Themes** - Toggle between themes with localStorage persistence
+- **Responsive Design** - Mobile-friendly with slide-out navigation panels
+- **Live Search** - Fast search with keyboard shortcuts (⌘K / Ctrl+K)
+
+### Obsidian Integration
 - **Full Obsidian Support** - Wiki links, backlinks, aliases, frontmatter
-- **Search** - Fast, fuzzy search across all pages
-- **Backlinks** - Automatic backlink tracking
+- **Backlink Tracking** - Automatic bidirectional links between pages
+- **Properties Display** - View frontmatter metadata including tags
+- **Live Reload** - Automatic updates when files change
+
+### Deployment
 - **Cloudflare Tunnel** - Secure public access via tunnels
 - **Cloudflare Access** - Zero-trust authentication
-- **Live Reload** - Automatic updates when files change
 - **Boot Service** - Run as a system service (macOS & Linux)
 
 ## Installation
@@ -43,6 +54,56 @@ obsidigen start
 ```
 
 Visit `http://localhost:4000` to view your wiki.
+
+**Landing Page:** The home page (`/`) automatically displays:
+1. A root-level page with "welcome" in the title (case-insensitive), or
+2. The first alphabetically-sorted root-level page, or
+3. A generated index of all pages
+
+## User Interface
+
+Obsidigen features a clean, three-column wiki layout:
+
+### Left Sidebar - Navigation
+- **Vault Title** - Displays your vault name at the top
+- **Search Bar** - Quick search with live results (keyboard shortcut: ⌘K / Ctrl+K)
+- **Tree View** - Collapsible folder structure
+  - Click folders to expand/collapse
+  - Current page highlighted
+  - Automatically expands to show active page
+
+### Center - Content
+- Clean, centered reading experience (max 800px width)
+- Full markdown rendering
+- Syntax highlighting for code blocks
+- Responsive tables and images
+
+### Right Sidebar - Widgets
+
+**Properties Widget**
+- Displays page frontmatter metadata
+- Shows last modified date
+- Tags displayed as colored badges
+
+**On This Page Widget**
+- Automatic table of contents from headings
+- Scroll spy - highlights current section as you read
+- Click to jump to any section
+
+**Backlinks Widget**
+- Lists all pages that link to the current page
+- Click to navigate to linking pages
+
+### Theme Toggle
+- Light/dark mode switcher at the bottom of the right sidebar
+- Preference saved in localStorage
+- Respects system theme preference on first visit
+
+### Mobile Experience
+- Hamburger menu for navigation (left)
+- Backlinks button for widgets (right)
+- Only one sidebar open at a time
+- Full touch support
 
 ## Commands
 
@@ -177,16 +238,19 @@ journalctl --user -u obsidigen-daemon -f
 ## Supported Obsidian Features
 
 **Implemented:**
-- Wiki links `[[Page]]`
+- Wiki links `[[Page]]` with automatic resolution
 - Wiki links with aliases `[[Page|Display Text]]`
-- Frontmatter aliases
-- YAML frontmatter
-- Headers and anchors
+- Frontmatter aliases and metadata
+- YAML frontmatter with full property display
+- Headers with automatic anchor links
+- Table of contents generation from headings
 - Highlights `==text==`
-- Callouts `> [!note]`
-- Code blocks
-- Tables
-- Images
+- Callouts `> [!note]`, `> [!warning]`, etc.
+- Code blocks with syntax highlighting
+- Tables with responsive layout
+- Images with automatic sizing
+- Backlink tracking (bidirectional links)
+- Tag display from frontmatter
 
 **Planned:**
 - Embeds `![[Page]]`
