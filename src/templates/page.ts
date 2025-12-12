@@ -259,9 +259,9 @@ body {
 }
 
 .tree-list .tree-list {
-  padding-left: 0.875rem;
+  padding-left: 1rem;
   border-left: 1px solid var(--border-subtle);
-  margin-left: 0.5rem;
+  margin-left: 0.75rem;
 }
 
 .tree-item {
@@ -274,11 +274,10 @@ body {
   gap: 0.25rem;
   padding: 0.2rem 0.75rem;
   cursor: pointer;
-  color: var(--text-muted);
-  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
   font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0;
   transition: color 0.1s;
 }
 
