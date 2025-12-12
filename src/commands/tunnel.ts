@@ -1,3 +1,4 @@
+
 // obsidigen tunnel commands
 
 import chalk from 'chalk';
@@ -315,4 +316,3 @@ async function handleDelete(vaultPath: string): Promise<void> {
   console.log(chalk.green('✔ Tunnel configuration removed'));
   console.log('');
 }
-

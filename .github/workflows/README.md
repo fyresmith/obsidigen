@@ -74,3 +74,4 @@ Release artifacts can be downloaded from:
 | macOS | x64, ARM64 | .tar.gz |
 | Windows | x64 | .zip |
 
+

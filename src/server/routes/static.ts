@@ -50,3 +50,4 @@ staticRoutes.get('/favicon.ico', async (c) => {
   return c.notFound();
 });
 
+
