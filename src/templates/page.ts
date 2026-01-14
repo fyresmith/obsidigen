@@ -1760,9 +1760,6 @@ function initMobile() {
   
   // Click on dimmed content area to return to center
   contentArea?.addEventListener('click', (e) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/fc9b174b-f9cc-4c04-a679-f74cd7c1f0d2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'page.ts:contentAreaClick',message:'Content area clicked',data:{justSwiped,isDimmed:contentArea.classList.contains('dimmed'),currentPanel,isSwiping},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
-    // #endregion
     // Ignore phantom clicks that fire after swipe gestures
     if (justSwiped) {
       return;
@@ -1777,9 +1774,6 @@ function initMobile() {
 }
 
 function goToPanel(panelIndex, animate = true) {
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/fc9b174b-f9cc-4c04-a679-f74cd7c1f0d2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'page.ts:goToPanel',message:'goToPanel called',data:{panelIndex,animate,currentPanelBefore:currentPanel,carouselTransformBefore:carousel?.style.transform},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
-  // #endregion
   if (!carousel || !contentArea) return;
   
   // Clamp to valid range
@@ -1869,10 +1863,6 @@ function initSwipeGestures() {
     const match = transform.match(/translateX\\(([\\-\\d.]+)vw\\)/);
     startTransform = match ? parseFloat(match[1]) : -83.33;
     
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/fc9b174b-f9cc-4c04-a679-f74cd7c1f0d2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'page.ts:touchstart',message:'Touch started',data:{currentPanel,startPanel,rawTransform:carousel.style.transform,parsedTransform:startTransform,matchFound:!!match},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C'})}).catch(()=>{});
-    // #endregion
-    
     // Disable transitions during drag
     carousel.classList.add('no-transition');
     carousel.classList.remove('transitioning');
@@ -1888,9 +1878,6 @@ function initSwipeGestures() {
     
     // Check if horizontal swipe (more horizontal than vertical)
     if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
-      // #region agent log
-      if (!isSwiping) fetch('http://127.0.0.1:7242/ingest/fc9b174b-f9cc-4c04-a679-f74cd7c1f0d2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'page.ts:touchmove',message:'isSwiping set to true',data:{diffX,startPanel,currentPanel},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
-      // #endregion
       isSwiping = true;
       touchCurrentX = touchX;
       
@@ -1924,9 +1911,6 @@ function initSwipeGestures() {
   }, { passive: false });
   
   document.addEventListener('touchend', (e) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/fc9b174b-f9cc-4c04-a679-f74cd7c1f0d2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'page.ts:touchend:entry',message:'Touch ended - entry',data:{isSwiping,touchStartX,startPanel,currentPanel},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,D'})}).catch(()=>{});
-    // #endregion
     if (!isSwiping || !touchStartX || e.target.closest('.search-modal')) {
       touchStartX = 0;
       touchStartY = 0;
@@ -1943,12 +1927,12 @@ function initSwipeGestures() {
     
     let newPanel = currentPanel;
     
-    // SHORT THRESHOLD: 15% of screen width
-    const shortThreshold = window.innerWidth * 0.15;
+    // SWIPE THRESHOLD: 15% of screen width
+    const swipeThreshold = window.innerWidth * 0.15;
     
     // BEHAVIOR 1: On middle panel - short swipe triggers panel change
     if (startPanel === 1) {
-      if (Math.abs(diffX) > shortThreshold) {
+      if (Math.abs(diffX) > swipeThreshold) {
         if (diffX > 0) {
           // Swipe right - open left panel
           newPanel = 0;
@@ -1961,33 +1945,35 @@ function initSwipeGestures() {
         newPanel = 1;
       }
     }
-    // BEHAVIOR 2: On side panels - follow the swipe gesture, snap to nearest
+    // BEHAVIOR 2: On side panels - require 15% swipe distance to change panels
     else {
-      // Calculate distances to each panel position
-      const leftPanelPos = 0;
-      const centerPanelPos = -83.33;
-      const rightPanelPos = -166.67;
-      
-      const distToLeft = Math.abs(currentTransform - leftPanelPos);
-      const distToCenter = Math.abs(currentTransform - centerPanelPos);
-      const distToRight = Math.abs(currentTransform - rightPanelPos);
-      
-      // Snap to nearest panel based on where we dragged to
-      if (distToLeft < distToCenter && distToLeft < distToRight) {
-        newPanel = 0;
-      } else if (distToCenter < distToRight) {
-        newPanel = 1;
+      // Check if swipe distance meets threshold
+      if (Math.abs(diffX) > swipeThreshold) {
+        // Calculate distances to each panel position
+        const leftPanelPos = 0;
+        const centerPanelPos = -83.33;
+        const rightPanelPos = -166.67;
+        
+        const distToLeft = Math.abs(currentTransform - leftPanelPos);
+        const distToCenter = Math.abs(currentTransform - centerPanelPos);
+        const distToRight = Math.abs(currentTransform - rightPanelPos);
+        
+        // Snap to nearest panel based on where we dragged to
+        if (distToLeft < distToCenter && distToLeft < distToRight) {
+          newPanel = 0;
+        } else if (distToCenter < distToRight) {
+          newPanel = 1;
+        } else {
+          newPanel = 2;
+        }
       } else {
-        newPanel = 2;
+        // Not enough distance - stay on current panel
+        newPanel = startPanel;
       }
     }
     
     // Only snap to panel if it actually changed, otherwise re-enable transitions
     const panelChanged = newPanel !== startPanel;
-    
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/fc9b174b-f9cc-4c04-a679-f74cd7c1f0d2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'page.ts:touchend:decision',message:'Panel decision made',data:{startPanel,currentPanel,newPanel,panelChanged,diffX,currentTransform},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C'})}).catch(()=>{});
-    // #endregion
     
     if (panelChanged) {
       goToPanel(newPanel, true);
