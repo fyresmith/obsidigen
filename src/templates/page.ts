@@ -1839,7 +1839,6 @@ body {
     height: 100vh;
     height: 100dvh;
     min-height: 100vh;
-    min-height: 100dvh;
     flex-shrink: 0;
     position: relative;
     transform: none;
@@ -1860,6 +1859,11 @@ body {
   /* Add top safe area to sidebar headers on mobile */
   .sidebar-left .sidebar-header {
     padding-top: calc(1.25rem + var(--safe-area-top));
+  }
+  
+  /* Add safe area to tree container on mobile (since there's no header) */
+  .sidebar-left .tree-container {
+    padding-top: calc(1rem + var(--safe-area-top));
   }
   
   .sidebar-right .properties-infographic {
