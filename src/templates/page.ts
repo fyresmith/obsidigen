@@ -1001,53 +1001,117 @@ body {
 }
 
 @media (max-width: 768px) {
+  body {
+    overflow: hidden;
+  }
+  
+  /* Horizontal carousel container */
+  .mobile-carousel-wrapper {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+  }
+  
+  .mobile-carousel {
+    display: flex;
+    height: 100vh;
+    width: calc(83.33vw + 100vw + 83.33vw); /* left (5/6) + center (full) + right (5/6) */
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: transform;
+  }
+  
+  .mobile-carousel.transitioning {
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  
+  .mobile-carousel.no-transition {
+    transition: none;
+  }
+  
+  /* Panel 0: Left Navigation - 5/6 of screen */
+  .mobile-carousel .sidebar-left {
+    display: flex;
+    flex-direction: column;
+    width: 83.33vw;
+    height: 100vh;
+    flex-shrink: 0;
+    position: relative;
+    transform: none;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border-subtle);
+  }
+  
+  /* Panel 1: Main Content - full screen */
+  .mobile-carousel .content-area {
+    width: 100vw;
+    height: 100vh;
+    flex-shrink: 0;
+    border-left: none;
+    border-right: none;
+    overflow-y: auto;
+    position: relative;
+  }
+  
+  /* Darkened overlay on content when side panels are visible */
+  .content-area::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 100;
+  }
+  
+  .content-area.dimmed::before {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  
+  /* Panel 2: Right Widgets - 5/6 of screen */
+  .mobile-carousel .sidebar-right {
+    display: flex;
+    flex-direction: column;
+    width: 83.33vw;
+    height: 100vh;
+    flex-shrink: 0;
+    position: relative;
+    transform: none;
+    background: var(--bg-secondary);
+    border-left: 1px solid var(--border-subtle);
+  }
+  
   .wiki-layout {
-    grid-template-columns: 1fr;
+    /* Override grid layout on mobile */
+    display: contents;
   }
   
   .mobile-header {
     display: none; /* Hidden - using floating buttons instead */
   }
   
-  .sidebar-left {
-    display: none;
-    position: fixed;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: var(--sidebar-width);
-    z-index: 1001;
-    transform: translateX(-100%);
-    transition: transform 0.25s ease;
-    background: var(--bg-secondary);
-    border-right: 1px solid var(--border-subtle);
-  }
-  
-  .sidebar-left.mobile-open {
-    display: flex;
-    transform: translateX(0);
-  }
-  
   /* Enhanced touch targets for tree navigation */
   .tree-folder-header,
   .tree-page-link {
     padding: 0.75rem;
-    min-height: 44px;
+    min-height: 24px;
     font-size: 0.95rem;
     align-items: center;
   }
   
-  .content-area {
-    border-left: none;
-    border-right: none;
-  }
-  
   .content-wrapper {
     padding: 1.5rem 1.25rem;
+    padding-top: calc(var(--floating-btn-size) + var(--floating-offset) + 1rem);
   }
   
   .article-title {
     font-size: 1.75rem;
+  }
+  
+  /* Hide old overlay */
+  .sidebar-overlay {
+    display: none !important;
   }
 }
 
@@ -1061,22 +1125,23 @@ body {
   width: var(--floating-btn-size);
   height: var(--floating-btn-size);
   border-radius: 50%;
-  background: rgba(26, 26, 26, 0.9);
+  background: var(--bg-secondary);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
+  border: 2px solid var(--border);
+  color: var(--text-primary);
   cursor: pointer;
   z-index: 1000;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px var(--shadow);
+  box-shadow: 0 4px 16px var(--shadow), 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
 }
 
 .floating-nav-btn:active {
   transform: scale(0.95);
-  background: var(--bg-hover);
+  background: var(--bg-tertiary);
+  border-color: var(--accent);
 }
 
 .floating-nav-btn svg {
@@ -1088,6 +1153,11 @@ body {
   opacity: 0;
   pointer-events: none;
   transform: translateY(-20px);
+}
+
+.floating-nav-btn.faded {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .floating-left-btn {
@@ -1107,18 +1177,23 @@ body {
   left: var(--floating-offset);
   right: var(--floating-offset);
   height: var(--search-bar-height);
-  background: rgba(26, 26, 26, 0.9);
+  background: var(--bg-secondary);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid var(--border-subtle);
+  border: 2px solid var(--border);
   border-radius: 26px;
   z-index: 1000;
   align-items: center;
   padding: 0 1.25rem;
   gap: 0.75rem;
   cursor: pointer;
-  box-shadow: 0 4px 12px var(--shadow);
+  box-shadow: 0 4px 16px var(--shadow), 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
+}
+
+.floating-search-bar:active {
+  background: var(--bg-tertiary);
+  border-color: var(--accent);
 }
 
 .floating-search-bar.hidden {
@@ -1127,15 +1202,20 @@ body {
   transform: translateY(20px);
 }
 
+.floating-search-bar.faded {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .floating-search-bar svg {
   width: 20px;
   height: 20px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   flex-shrink: 0;
 }
 
 .floating-search-bar .search-placeholder {
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-size: 0.95rem;
   flex: 1;
 }
@@ -1278,10 +1358,56 @@ body {
   font-size: 0.95rem;
 }
 
+/* Panel Indicators */
+.panel-indicators {
+  display: none;
+  position: fixed;
+  bottom: calc(var(--search-bar-height) + var(--floating-offset) + 0.5rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1001;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 2px 8px var(--shadow);
+  transition: all 0.3s ease;
+}
+
+.panel-indicators.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(10px);
+}
+
+.panel-indicators.faded {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.panel-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  opacity: 0.3;
+  transition: all 0.3s ease;
+}
+
+.panel-indicator.active {
+  width: 24px;
+  border-radius: 4px;
+  background: var(--accent);
+  opacity: 1;
+}
+
 /* Show floating controls on mobile */
 @media (max-width: 768px) {
   .floating-nav-btn,
-  .floating-search-bar {
+  .floating-search-bar,
+  .panel-indicators {
     display: flex;
   }
 }
@@ -1591,59 +1717,151 @@ function updateThemeButton(theme) {
 // MOBILE NAVIGATION
 // ============================================
 
+// ============================================
+// MOBILE CAROUSEL NAVIGATION
+// ============================================
+
+let currentPanel = 1; // 0 = left nav, 1 = content (default), 2 = right widgets
+let carousel = null;
+let panelIndicators = [];
+let contentArea = null;
+
 function initMobile() {
+  carousel = document.querySelector('.mobile-carousel');
+  contentArea = document.querySelector('.content-area');
+  if (!carousel) return; // Not on mobile
+  
   const leftBtn = document.getElementById('floating-left-btn');
   const rightBtn = document.getElementById('floating-right-btn');
-  const sidebarLeft = document.querySelector('.sidebar-left');
-  const sidebarRight = document.querySelector('.sidebar-right');
-  const overlay = document.getElementById('sidebar-overlay');
+  const floatingSearch = document.querySelector('.floating-search-bar');
+  const panelIndicatorsEl = document.querySelector('.panel-indicators');
+  panelIndicators = Array.from(document.querySelectorAll('.panel-indicator'));
   
+  // Initialize - show center panel (content)
+  goToPanel(1, false);
+  
+  // Button handlers
   leftBtn?.addEventListener('click', () => {
-    // Close right sidebar if open
-    sidebarRight?.classList.remove('mobile-open');
-    // Toggle left sidebar
-    sidebarLeft?.classList.toggle('mobile-open');
-    overlay?.classList.toggle('active', sidebarLeft?.classList.contains('mobile-open'));
+    if (currentPanel === 1) {
+      goToPanel(0); // From content to left nav
+    } else if (currentPanel === 2) {
+      goToPanel(1); // From right widgets to content
+    }
   });
   
   rightBtn?.addEventListener('click', () => {
-    // Close left sidebar if open
-    sidebarLeft?.classList.remove('mobile-open');
-    // Toggle right sidebar
-    sidebarRight?.classList.toggle('mobile-open');
-    overlay?.classList.toggle('active', sidebarRight?.classList.contains('mobile-open'));
+    if (currentPanel === 0) {
+      goToPanel(1); // From left nav to content
+    } else if (currentPanel === 1) {
+      goToPanel(2); // From content to right widgets
+    }
   });
   
-  overlay?.addEventListener('click', () => {
-    sidebarLeft?.classList.remove('mobile-open');
-    sidebarRight?.classList.remove('mobile-open');
-    overlay.classList.remove('active');
+  // Click on dimmed content area to return to center
+  contentArea?.addEventListener('click', (e) => {
+    if (contentArea.classList.contains('dimmed') && currentPanel !== 1) {
+      e.preventDefault();
+      e.stopPropagation();
+      goToPanel(1);
+    }
   });
 }
 
+function goToPanel(panelIndex, animate = true) {
+  if (!carousel || !contentArea) return;
+  
+  // Clamp to valid range
+  panelIndex = Math.max(0, Math.min(2, panelIndex));
+  currentPanel = panelIndex;
+  
+  // Calculate transform based on panel widths
+  // Left panel: 83.33vw, Center: 100vw, Right: 83.33vw
+  let offset = 0;
+  if (panelIndex === 0) {
+    offset = 0; // Show left panel (0 to 100vw visible: left panel + 1/6 of center)
+  } else if (panelIndex === 1) {
+    offset = -83.33; // Show center panel (83.33vw to 183.33vw visible: full center)
+  } else if (panelIndex === 2) {
+    offset = -(83.33 + 100 - 16.67); // Show right panel (166.67vw to 266.67vw visible: 1/6 of center + right panel)
+    // This is -166.67vw, which shows the last 1/6 of center content as a sliver on the left
+  }
+  
+  // Apply transition
+  if (animate) {
+    carousel.classList.add('transitioning');
+    carousel.classList.remove('no-transition');
+  } else {
+    carousel.classList.add('no-transition');
+    carousel.classList.remove('transitioning');
+  }
+  
+  carousel.style.transform = \`translateX(\${offset}vw)\`;
+  
+  // Update indicators
+  panelIndicators.forEach((indicator, index) => {
+    indicator.classList.toggle('active', index === panelIndex);
+  });
+  
+  // Dim content area when on side panels
+  if (panelIndex === 0 || panelIndex === 2) {
+    contentArea.classList.add('dimmed');
+  } else {
+    contentArea.classList.remove('dimmed');
+  }
+  
+  // Fade floating buttons and indicators on side panels
+  const floatingButtons = document.querySelectorAll('.floating-nav-btn');
+  const floatingSearch = document.querySelector('.floating-search-bar');
+  const panelIndicatorsEl = document.querySelector('.panel-indicators');
+  
+  if (panelIndex === 0 || panelIndex === 2) {
+    floatingButtons.forEach(btn => btn.classList.add('faded'));
+    floatingSearch?.classList.add('faded');
+    panelIndicatorsEl?.classList.add('faded');
+  } else {
+    floatingButtons.forEach(btn => btn.classList.remove('faded'));
+    floatingSearch?.classList.remove('faded');
+    panelIndicatorsEl?.classList.remove('faded');
+  }
+}
+
 // ============================================
-// SWIPE GESTURES
+// SWIPE GESTURES FOR CAROUSEL
 // ============================================
 
 function initSwipeGestures() {
-  const sidebarLeft = document.querySelector('.sidebar-left');
-  const sidebarRight = document.querySelector('.sidebar-right');
-  const overlay = document.getElementById('sidebar-overlay');
+  if (!carousel) return; // Not on mobile
   
   let touchStartX = 0;
   let touchStartY = 0;
+  let touchCurrentX = 0;
   let touchStartTime = 0;
   let isSwiping = false;
+  let startTransform = 0;
   
+  // Swipe anywhere on the document
   document.addEventListener('touchstart', (e) => {
+    // Skip if touching the search modal
+    if (e.target.closest('.search-modal')) return;
+    
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
+    touchCurrentX = touchStartX;
     touchStartTime = Date.now();
     isSwiping = false;
+    
+    // Get current transform value
+    const transform = carousel.style.transform || 'translateX(-83.33vw)';
+    const match = transform.match(/translateX\(([-\d.]+)vw\)/);
+    startTransform = match ? parseFloat(match[1]) : -83.33;
+    
+    // Disable transitions during drag
+    carousel.classList.add('no-transition');
+    carousel.classList.remove('transitioning');
   }, { passive: true });
   
   document.addEventListener('touchmove', (e) => {
-    if (!touchStartX) return;
+    if (!touchStartX || e.target.closest('.search-modal')) return;
     
     const touchX = e.touches[0].clientX;
     const touchY = e.touches[0].clientY;
@@ -1653,40 +1871,68 @@ function initSwipeGestures() {
     // Check if horizontal swipe (more horizontal than vertical)
     if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
       isSwiping = true;
+      touchCurrentX = touchX;
+      
+      // Calculate drag offset as percentage of viewport width
+      const dragPercent = (diffX / window.innerWidth) * 100;
+      const newTransform = startTransform + dragPercent;
+      
+      // Apply transform with limits
+      // Min: -(83.33 + 100 - 16.67) = -166.67 (right panel)
+      // Max: 0 (left panel)
+      const minTransform = -(83.33 + 100 - 16.67);
+      const maxTransform = 0;
+      const clampedTransform = Math.max(minTransform, Math.min(maxTransform, newTransform));
+      
+      carousel.style.transform = \`translateX(\${clampedTransform}vw)\`;
+      
+      // Update dim state during drag
+      const centerThreshold = -41.665; // halfway to left panel from center
+      const rightThreshold = -(83.33 + 50); // halfway from center to right panel
+      if (clampedTransform > centerThreshold || clampedTransform < rightThreshold) {
+        contentArea?.classList.add('dimmed');
+      } else {
+        contentArea?.classList.remove('dimmed');
+      }
+      
+      // Prevent default to stop scrolling during swipe
+      if (isSwiping) {
+        e.preventDefault();
+      }
     }
-  }, { passive: true });
+  }, { passive: false });
   
   document.addEventListener('touchend', (e) => {
-    if (!isSwiping || !touchStartX) {
+    if (!isSwiping || !touchStartX || e.target.closest('.search-modal')) {
       touchStartX = 0;
       touchStartY = 0;
       return;
     }
     
     const touchEndX = e.changedTouches[0].clientX;
-    const touchEndY = e.changedTouches[0].clientY;
     const diffX = touchEndX - touchStartX;
-    const diffY = touchEndY - touchStartY;
     const diffTime = Date.now() - touchStartTime;
     const velocity = Math.abs(diffX) / diffTime;
     
-    // Check if it's a horizontal swipe
-    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
-      const screenWidth = window.innerWidth;
-      
-      // Left half of screen - swipe right to open left panel
-      if (touchStartX < screenWidth / 2 && diffX > 0) {
-        sidebarRight?.classList.remove('mobile-open');
-        sidebarLeft?.classList.add('mobile-open');
-        overlay?.classList.add('active');
-      }
-      // Right half of screen - swipe left to open right panel
-      else if (touchStartX > screenWidth / 2 && diffX < 0) {
-        sidebarLeft?.classList.remove('mobile-open');
-        sidebarRight?.classList.add('mobile-open');
-        overlay?.classList.add('active');
+    // Determine new panel based on swipe distance and velocity
+    let newPanel = currentPanel;
+    
+    // Threshold: 30% of screen width or high velocity (> 0.5px/ms)
+    const threshold = window.innerWidth * 0.3;
+    const isSignificantSwipe = Math.abs(diffX) > threshold || velocity > 0.5;
+    
+    if (isSignificantSwipe) {
+      if (diffX > 0) {
+        // Swiped right - go to previous panel
+        newPanel = Math.max(0, currentPanel - 1);
+      } else {
+        // Swiped left - go to next panel
+        newPanel = Math.min(2, currentPanel + 1);
       }
     }
+    
+    // Snap to panel
+    goToPanel(newPanel, true);
     
     touchStartX = 0;
     touchStartY = 0;
@@ -1702,6 +1948,7 @@ function initScrollBasedUI() {
   const contentArea = document.querySelector('.content-area');
   const floatingButtons = document.querySelectorAll('.floating-nav-btn');
   const floatingSearch = document.querySelector('.floating-search-bar');
+  const panelIndicatorsEl = document.querySelector('.panel-indicators');
   
   if (!contentArea) return;
   
@@ -1718,11 +1965,13 @@ function initScrollBasedUI() {
         if (scrollTop > lastScrollTop + threshold && scrollTop > 100) {
           floatingButtons.forEach(btn => btn.classList.add('hidden'));
           floatingSearch?.classList.add('hidden');
+          panelIndicatorsEl?.classList.add('hidden');
         }
         // Scrolling up - show UI
         else if (scrollTop < lastScrollTop - threshold || scrollTop < 100) {
           floatingButtons.forEach(btn => btn.classList.remove('hidden'));
           floatingSearch?.classList.remove('hidden');
+          panelIndicatorsEl?.classList.remove('hidden');
         }
         
         lastScrollTop = scrollTop;
@@ -2241,7 +2490,17 @@ function layout(title: string, content: string, options: { vaultName?: string; c
   <!-- Sidebar Overlay -->
   <div id="sidebar-overlay" class="sidebar-overlay"></div>
   
-  <div class="wiki-layout">
+  <!-- Panel Indicators (Mobile) -->
+  <div class="panel-indicators">
+    <div class="panel-indicator"></div>
+    <div class="panel-indicator active"></div>
+    <div class="panel-indicator"></div>
+  </div>
+  
+  <!-- Mobile Carousel Wrapper -->
+  <div class="mobile-carousel-wrapper">
+    <div class="mobile-carousel">
+      <div class="wiki-layout">
     <!-- Left Sidebar -->
     <aside class="sidebar-left">
       <div class="sidebar-header">
@@ -2315,6 +2574,8 @@ function layout(title: string, content: string, options: { vaultName?: string; c
         </button>
       </div>
     </aside>
+      </div>
+    </div>
   </div>
   
   <script>${scripts}</script>
