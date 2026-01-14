@@ -2724,13 +2724,7 @@ function updateThemeColor(panelIndex = 1) {
   // Panel 1 (main content) uses --bg-primary
   // Panels 0 and 2 (sidebars) use --bg-secondary
   let color;
-  if (panelIndex === 1) {
-    // Main content panel
-    color = isDark ? '#1a1a1a' : '#fafafa';
-  } else {
-    // Side panels (left nav or right widgets)
-    color = isDark ? '#1a1a1a' : '#ffffff';
-  }
+  color = isDark ? '#1a1a1a' : '#ffffff';
   
   meta.setAttribute('content', color);
 }
