@@ -318,6 +318,47 @@ export class VaultIndex {
   }
   
   /**
+   * Normalize a slug that may have been URL-decoded by the web framework
+   * Returns the correctly encoded slug if it exists in the index
+   */
+  private normalizeSlug(slug: string): string | null {
+    // Try direct match first
+    if (this.pages.has(slug)) {
+      return slug;
+    }
+    
+    // Try case-insensitive
+    const lowerSlug = slug.toLowerCase();
+    for (const [key] of this.pages) {
+      if (key.toLowerCase() === lowerSlug) {
+        return key;
+      }
+    }
+    
+    // If slug appears to be decoded, try re-encoding it
+    const reencoded = slug
+      .split('/')
+      .map(part => encodeURIComponent(part))
+      .join('/');
+    
+    if (reencoded !== slug) {
+      if (this.pages.has(reencoded)) {
+        return reencoded;
+      }
+      
+      // Try case-insensitive match with re-encoded version
+      const lowerReencoded = reencoded.toLowerCase();
+      for (const [key] of this.pages) {
+        if (key.toLowerCase() === lowerReencoded) {
+          return key;
+        }
+      }
+    }
+    
+    return null;
+  }
+  
+  /**
    * Resolve a link text to a slug
    */
   getSlug(linkText: string): string | null {
@@ -358,16 +399,10 @@ export class VaultIndex {
    * Get page info by slug
    */
   getPage(slug: string): PageInfo | null {
-    // Try direct match
-    if (this.pages.has(slug)) {
-      return this.pages.get(slug)!;
-    }
-    
-    // Try case-insensitive
-    for (const [key, value] of this.pages) {
-      if (key.toLowerCase() === slug.toLowerCase()) {
-        return value;
-      }
+    // Try to normalize the slug first
+    const normalized = this.normalizeSlug(slug);
+    if (normalized) {
+      return this.pages.get(normalized)!;
     }
     
     // Try resolving as link text
@@ -390,7 +425,8 @@ export class VaultIndex {
    * Get backlinks for a page
    */
   getBacklinks(slug: string): PageInfo[] {
-    const backlinks = this.backlinks.get(slug);
+    const normalized = this.normalizeSlug(slug) || slug;
+    const backlinks = this.backlinks.get(normalized);
     if (!backlinks) return [];
     
     return Array.from(backlinks)
@@ -402,7 +438,8 @@ export class VaultIndex {
    * Get forward links for a page (only existing pages)
    */
   getForwardLinks(slug: string): PageInfo[] {
-    const links = this.forwardLinks.get(slug);
+    const normalized = this.normalizeSlug(slug) || slug;
+    const links = this.forwardLinks.get(normalized);
     if (!links) return [];
     
     return Array.from(links)
@@ -420,7 +457,8 @@ export class VaultIndex {
     folder: string;
     exists: boolean;
   }> {
-    const content = this.pageContent.get(slug);
+    const normalized = this.normalizeSlug(slug) || slug;
+    const content = this.pageContent.get(normalized);
     if (!content) return [];
     
     // Extract all wiki links from content
@@ -494,11 +532,12 @@ export class VaultIndex {
       section?: string;
     }>;
   }> {
-    const backlinkSlugs = this.backlinks.get(slug);
+    const normalized = this.normalizeSlug(slug) || slug;
+    const backlinkSlugs = this.backlinks.get(normalized);
     if (!backlinkSlugs) return [];
     
     // Get the target page to find all possible link texts
-    const targetPage = this.pages.get(slug);
+    const targetPage = this.pages.get(normalized);
     if (!targetPage) return [];
     
     // Build list of possible link texts (title, filename, aliases)
