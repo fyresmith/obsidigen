@@ -143,6 +143,9 @@ const styles = `
 html {
   font-size: 15.5px;
   scroll-behavior: smooth;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 body {
@@ -150,11 +153,13 @@ body {
   background: var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.65;
-  min-height: 100vh;
-  min-height: 100dvh; /* Dynamic viewport height for mobile */
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for mobile */
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Ensure content fits within safe areas */
+  position: relative;
 }
 
 /* ============================================
@@ -166,6 +171,7 @@ body {
   grid-template-columns: var(--sidebar-width) minmax(0, 800px) var(--backlinks-width);
   justify-content: center;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   background: var(--bg-primary);
 }
@@ -179,6 +185,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
@@ -1818,7 +1825,13 @@ body {
   /* Horizontal carousel container */
   .mobile-carousel-wrapper {
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
     overflow: hidden;
   }
   
@@ -1911,7 +1924,6 @@ body {
     width: 83.33vw;
     height: 100vh;
     height: 100dvh;
-    min-height: 100vh;
     flex-shrink: 0;
     position: relative;
     transform: none;
@@ -1947,9 +1959,9 @@ body {
   /* Panel selector container - match sidebar background on mobile */
   .sidebar-right .panel-selector-container {
     background: var(--bg-secondary);
-    /* Aggressive bottom padding to clear Safari navigation bar */
+    /* Aggressive bottom padding to clear Safari navigation bar and home indicator */
     padding-top: 1rem;
-    padding-bottom: calc(80px + var(--safe-area-bottom));
+    padding-bottom: calc(120px + var(--safe-area-bottom));
   }
   
   /* Enhanced touch targets for tree navigation */
@@ -1974,7 +1986,8 @@ body {
   .content-wrapper {
     padding: 1.5rem 1.25rem;
     padding-top: calc(var(--floating-btn-size) + var(--floating-offset) + 1rem + var(--safe-area-top));
-    padding-bottom: calc(var(--search-bar-height) + var(--floating-offset) * 2 + 2rem + var(--safe-area-bottom));
+    /* Increased bottom padding to prevent floating search bar overlap */
+    padding-bottom: calc(var(--search-bar-height) + var(--floating-offset) * 2 + 3rem + var(--safe-area-bottom));
   }
   
   .article-title {
@@ -4157,8 +4170,9 @@ function layout(title: string, content: string, options: { vaultName?: string; c
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0f0f0f" id="theme-color-meta">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="${escapeHtml(vaultName)}">
+  <meta name="mobile-web-app-capable" content="yes">
   <title>${escapeHtml(title)} - ${escapeHtml(vaultName)}</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">

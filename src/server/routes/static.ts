@@ -99,6 +99,7 @@ staticRoutes.get('/manifest.json', async (c) => {
     description: 'Your personal knowledge base',
     start_url: '/',
     display: 'standalone',
+    display_override: ['standalone', 'fullscreen'],
     background_color: '#0f0f0f',
     theme_color: '#0f0f0f',
     icons: iconExists ? [
@@ -108,7 +109,9 @@ staticRoutes.get('/manifest.json', async (c) => {
         type: 'image/png',
         purpose: 'any maskable'
       }
-    ] : []
+    ] : [],
+    scope: '/',
+    orientation: 'any'
   };
   
   c.header('Content-Type', 'application/json');
