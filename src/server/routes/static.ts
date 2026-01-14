@@ -50,4 +50,70 @@ staticRoutes.get('/favicon.ico', async (c) => {
   return c.notFound();
 });
 
+// PWA icon route - serves icon.png from vault root
+staticRoutes.get('/icon.png', async (c) => {
+  const vaultPath = c.get('vaultPath');
+  const iconPath = join(vaultPath, 'icon.png');
+  
+  if (existsSync(iconPath)) {
+    try {
+      const file = readFileSync(iconPath);
+      c.header('Content-Type', 'image/png');
+      c.header('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
+      return c.body(file);
+    } catch (error) {
+      console.error('Error serving icon.png:', error);
+    }
+  }
+  
+  return c.notFound();
+});
+
+// Apple touch icon route - also uses icon.png
+staticRoutes.get('/apple-touch-icon.png', async (c) => {
+  const vaultPath = c.get('vaultPath');
+  const iconPath = join(vaultPath, 'icon.png');
+  
+  if (existsSync(iconPath)) {
+    try {
+      const file = readFileSync(iconPath);
+      c.header('Content-Type', 'image/png');
+      c.header('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
+      return c.body(file);
+    } catch (error) {
+      console.error('Error serving apple-touch-icon:', error);
+    }
+  }
+  
+  return c.notFound();
+});
+
+// PWA manifest route
+staticRoutes.get('/manifest.json', async (c) => {
+  const vaultPath = c.get('vaultPath');
+  const iconExists = existsSync(join(vaultPath, 'icon.png'));
+  
+  const manifest = {
+    name: 'Obsidigen',
+    short_name: 'Obsidigen',
+    description: 'Your personal knowledge base',
+    start_url: '/',
+    display: 'standalone',
+    background_color: '#0f0f0f',
+    theme_color: '#0f0f0f',
+    icons: iconExists ? [
+      {
+        src: '/icon.png',
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'any maskable'
+      }
+    ] : []
+  };
+  
+  c.header('Content-Type', 'application/json');
+  c.header('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+  return c.json(manifest);
+});
+
 

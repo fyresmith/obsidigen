@@ -110,6 +110,12 @@ export class VaultIndex {
       // Skip Python files
       if (entry.endsWith('.py')) continue;
       
+      // Skip PWA icon (excluded from indexing/display as it's used for app icon)
+      if (entry === 'icon.png') continue;
+      
+      // Skip favicon files
+      if (entry.startsWith('favicon.')) continue;
+      
       const fullPath = join(dirPath, entry);
       const stat = statSync(fullPath);
       
