@@ -5,7 +5,7 @@
   "type": "module",
   "main": "dist/cli.js",
   "bin": {
-    "obsidigen": "./dist/cli.js"
+    "obsidigen": "dist/cli.js"
   },
   "files": [
     "dist/**/*",

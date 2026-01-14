@@ -51,6 +51,12 @@ const styles = `
   --font-mono: 'Berkeley Mono', 'IBM Plex Mono', 'JetBrains Mono', 'Fira Code', monospace;
   --font-sans: 'Söhne', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-serif: 'Newsreader', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  
+  /* Mobile-specific variables */
+  --floating-btn-size: 48px;
+  --floating-offset: 16px;
+  --search-bar-height: 52px;
+  --modal-backdrop: rgba(0, 0, 0, 0.8);
 }
 
 [data-theme="light"] {
@@ -1000,7 +1006,7 @@ body {
   }
   
   .mobile-header {
-    display: flex;
+    display: none; /* Hidden - using floating buttons instead */
   }
   
   .sidebar-left {
@@ -1022,8 +1028,16 @@ body {
     transform: translateX(0);
   }
   
+  /* Enhanced touch targets for tree navigation */
+  .tree-folder-header,
+  .tree-page-link {
+    padding: 0.75rem;
+    min-height: 44px;
+    font-size: 0.95rem;
+    align-items: center;
+  }
+  
   .content-area {
-    padding-top: 56px;
     border-left: none;
     border-right: none;
   }
@@ -1034,6 +1048,241 @@ body {
   
   .article-title {
     font-size: 1.75rem;
+  }
+}
+
+/* ============================================
+   FLOATING MOBILE CONTROLS
+   ============================================ */
+
+.floating-nav-btn {
+  display: none;
+  position: fixed;
+  width: var(--floating-btn-size);
+  height: var(--floating-btn-size);
+  border-radius: 50%;
+  background: rgba(26, 26, 26, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  cursor: pointer;
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px var(--shadow);
+  transition: all 0.3s ease;
+}
+
+.floating-nav-btn:active {
+  transform: scale(0.95);
+  background: var(--bg-hover);
+}
+
+.floating-nav-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+.floating-nav-btn.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-20px);
+}
+
+.floating-left-btn {
+  top: var(--floating-offset);
+  left: var(--floating-offset);
+}
+
+.floating-right-btn {
+  top: var(--floating-offset);
+  right: var(--floating-offset);
+}
+
+.floating-search-bar {
+  display: none;
+  position: fixed;
+  bottom: var(--floating-offset);
+  left: var(--floating-offset);
+  right: var(--floating-offset);
+  height: var(--search-bar-height);
+  background: rgba(26, 26, 26, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border-subtle);
+  border-radius: 26px;
+  z-index: 1000;
+  align-items: center;
+  padding: 0 1.25rem;
+  gap: 0.75rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px var(--shadow);
+  transition: all 0.3s ease;
+}
+
+.floating-search-bar.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(20px);
+}
+
+.floating-search-bar svg {
+  width: 20px;
+  height: 20px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.floating-search-bar .search-placeholder {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  flex: 1;
+}
+
+/* Search Modal */
+.search-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--modal-backdrop);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.search-modal.active {
+  display: flex;
+  flex-direction: column;
+  animation: fadeIn 0.2s ease;
+}
+
+.search-modal-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s ease;
+  padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.search-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1rem;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.search-modal-input {
+  flex: 1;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 0.85rem 1rem 0.85rem 3rem;
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.search-modal-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+.search-modal-input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-modal-header .search-icon {
+  position: absolute;
+  left: 2rem;
+  pointer-events: none;
+}
+
+.search-modal-close {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 0.5rem;
+  cursor: pointer;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.search-modal-close:active {
+  background: var(--bg-hover);
+}
+
+.search-modal-close svg {
+  width: 24px;
+  height: 24px;
+}
+
+.search-modal-results {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.search-modal-result-item {
+  display: block;
+  padding: 1rem 1.25rem;
+  text-decoration: none;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  transition: all 0.15s;
+}
+
+.search-modal-result-item:active {
+  background: var(--bg-hover);
+  transform: scale(0.98);
+}
+
+.search-modal-result-title {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.search-modal-result-path {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-family: var(--font-mono);
+}
+
+.search-modal-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 3rem 1rem;
+  font-size: 0.95rem;
+}
+
+/* Show floating controls on mobile */
+@media (max-width: 768px) {
+  .floating-nav-btn,
+  .floating-search-bar {
+    display: flex;
   }
 }
 
@@ -1343,13 +1592,13 @@ function updateThemeButton(theme) {
 // ============================================
 
 function initMobile() {
-  const menuBtn = document.getElementById('mobile-menu-btn');
-  const backlinksBtn = document.getElementById('mobile-backlinks-btn');
+  const leftBtn = document.getElementById('floating-left-btn');
+  const rightBtn = document.getElementById('floating-right-btn');
   const sidebarLeft = document.querySelector('.sidebar-left');
   const sidebarRight = document.querySelector('.sidebar-right');
   const overlay = document.getElementById('sidebar-overlay');
   
-  menuBtn?.addEventListener('click', () => {
+  leftBtn?.addEventListener('click', () => {
     // Close right sidebar if open
     sidebarRight?.classList.remove('mobile-open');
     // Toggle left sidebar
@@ -1357,7 +1606,7 @@ function initMobile() {
     overlay?.classList.toggle('active', sidebarLeft?.classList.contains('mobile-open'));
   });
   
-  backlinksBtn?.addEventListener('click', () => {
+  rightBtn?.addEventListener('click', () => {
     // Close left sidebar if open
     sidebarLeft?.classList.remove('mobile-open');
     // Toggle right sidebar
@@ -1370,6 +1619,198 @@ function initMobile() {
     sidebarRight?.classList.remove('mobile-open');
     overlay.classList.remove('active');
   });
+}
+
+// ============================================
+// SWIPE GESTURES
+// ============================================
+
+function initSwipeGestures() {
+  const sidebarLeft = document.querySelector('.sidebar-left');
+  const sidebarRight = document.querySelector('.sidebar-right');
+  const overlay = document.getElementById('sidebar-overlay');
+  
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchStartTime = 0;
+  let isSwiping = false;
+  
+  document.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchStartTime = Date.now();
+    isSwiping = false;
+  }, { passive: true });
+  
+  document.addEventListener('touchmove', (e) => {
+    if (!touchStartX) return;
+    
+    const touchX = e.touches[0].clientX;
+    const touchY = e.touches[0].clientY;
+    const diffX = touchX - touchStartX;
+    const diffY = touchY - touchStartY;
+    
+    // Check if horizontal swipe (more horizontal than vertical)
+    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
+      isSwiping = true;
+    }
+  }, { passive: true });
+  
+  document.addEventListener('touchend', (e) => {
+    if (!isSwiping || !touchStartX) {
+      touchStartX = 0;
+      touchStartY = 0;
+      return;
+    }
+    
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    const diffX = touchEndX - touchStartX;
+    const diffY = touchEndY - touchStartY;
+    const diffTime = Date.now() - touchStartTime;
+    const velocity = Math.abs(diffX) / diffTime;
+    
+    // Check if it's a horizontal swipe
+    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+      const screenWidth = window.innerWidth;
+      
+      // Left half of screen - swipe right to open left panel
+      if (touchStartX < screenWidth / 2 && diffX > 0) {
+        sidebarRight?.classList.remove('mobile-open');
+        sidebarLeft?.classList.add('mobile-open');
+        overlay?.classList.add('active');
+      }
+      // Right half of screen - swipe left to open right panel
+      else if (touchStartX > screenWidth / 2 && diffX < 0) {
+        sidebarLeft?.classList.remove('mobile-open');
+        sidebarRight?.classList.add('mobile-open');
+        overlay?.classList.add('active');
+      }
+    }
+    
+    touchStartX = 0;
+    touchStartY = 0;
+    isSwiping = false;
+  }, { passive: true });
+}
+
+// ============================================
+// SCROLL-BASED UI VISIBILITY
+// ============================================
+
+function initScrollBasedUI() {
+  const contentArea = document.querySelector('.content-area');
+  const floatingButtons = document.querySelectorAll('.floating-nav-btn');
+  const floatingSearch = document.querySelector('.floating-search-bar');
+  
+  if (!contentArea) return;
+  
+  let lastScrollTop = 0;
+  let ticking = false;
+  const threshold = 10; // Minimum scroll distance to trigger
+  
+  contentArea.addEventListener('scroll', () => {
+    if (!ticking) {
+      requestAnimationFrame(() => {
+        const scrollTop = contentArea.scrollTop;
+        
+        // Scrolling down - hide UI
+        if (scrollTop > lastScrollTop + threshold && scrollTop > 100) {
+          floatingButtons.forEach(btn => btn.classList.add('hidden'));
+          floatingSearch?.classList.add('hidden');
+        }
+        // Scrolling up - show UI
+        else if (scrollTop < lastScrollTop - threshold || scrollTop < 100) {
+          floatingButtons.forEach(btn => btn.classList.remove('hidden'));
+          floatingSearch?.classList.remove('hidden');
+        }
+        
+        lastScrollTop = scrollTop;
+        ticking = false;
+      });
+      ticking = true;
+    }
+  });
+}
+
+// ============================================
+// SEARCH MODAL
+// ============================================
+
+let searchModal = null;
+let searchModalInput = null;
+let searchModalResults = null;
+
+function initSearchModal() {
+  const floatingSearchBar = document.querySelector('.floating-search-bar');
+  searchModal = document.getElementById('search-modal');
+  searchModalInput = document.getElementById('search-modal-input');
+  searchModalResults = document.getElementById('search-modal-results');
+  const closeBtn = document.getElementById('search-modal-close');
+  
+  // Open modal when clicking floating search bar
+  floatingSearchBar?.addEventListener('click', openSearchModal);
+  
+  // Close modal
+  closeBtn?.addEventListener('click', closeSearchModal);
+  searchModal?.addEventListener('click', (e) => {
+    if (e.target === searchModal) {
+      closeSearchModal();
+    }
+  });
+  
+  // ESC key to close
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && searchModal?.classList.contains('active')) {
+      closeSearchModal();
+    }
+  });
+  
+  // Search functionality
+  let debounceTimer;
+  searchModalInput?.addEventListener('input', (e) => {
+    clearTimeout(debounceTimer);
+    const query = e.target.value.trim();
+    
+    if (!query) {
+      searchModalResults.innerHTML = '<div class="search-modal-empty">Type to search...</div>';
+      return;
+    }
+    
+    debounceTimer = setTimeout(async () => {
+      try {
+        const res = await fetch('/api/search?q=' + encodeURIComponent(query));
+        const data = await res.json();
+        
+        if (data.results.length > 0) {
+          searchModalResults.innerHTML = data.results.map(r => \`
+            <a href="/\${r.slug}" class="search-modal-result-item">
+              <div class="search-modal-result-title">\${escapeHtml(r.title)}</div>
+              <div class="search-modal-result-path">\${escapeHtml(r.path)}</div>
+            </a>
+          \`).join('');
+        } else {
+          searchModalResults.innerHTML = '<div class="search-modal-empty">No results found</div>';
+        }
+      } catch (err) {
+        console.error('Search error:', err);
+        searchModalResults.innerHTML = '<div class="search-modal-empty">Search error</div>';
+      }
+    }, 200);
+  });
+}
+
+function openSearchModal() {
+  searchModal?.classList.add('active');
+  searchModalInput?.focus();
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSearchModal() {
+  searchModal?.classList.remove('active');
+  if (searchModalInput) searchModalInput.value = '';
+  if (searchModalResults) searchModalResults.innerHTML = '<div class="search-modal-empty">Type to search...</div>';
+  document.body.style.overflow = '';
 }
 
 // ============================================
@@ -1668,6 +2109,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initMobile();
   initTOC();
   initHoverPreview();
+  initSwipeGestures();
+  initScrollBasedUI();
+  initSearchModal();
 });
 `;
 
@@ -1745,23 +2189,54 @@ function layout(title: string, content: string, options: { vaultName?: string; c
   <style>${styles}</style>
 </head>
 <body data-current-slug="${escapeHtml(currentSlug)}">
-  <!-- Mobile Header -->
-  <header class="mobile-header">
-    <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Open navigation">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="3" y1="12" x2="21" y2="12"/>
-        <line x1="3" y1="6" x2="21" y2="6"/>
-        <line x1="3" y1="18" x2="21" y2="18"/>
-      </svg>
-    </button>
-    <span class="mobile-title">${escapeHtml(vaultName)}</span>
-    <button id="mobile-backlinks-btn" class="mobile-backlinks-btn" aria-label="Open backlinks">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-      </svg>
-    </button>
-  </header>
+  <!-- Floating Navigation Buttons (Mobile) -->
+  <button id="floating-left-btn" class="floating-nav-btn floating-left-btn" aria-label="Open navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"/>
+      <line x1="3" y1="6" x2="21" y2="6"/>
+      <line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+  
+  <button id="floating-right-btn" class="floating-nav-btn floating-right-btn" aria-label="Open widgets">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="3" y="3" width="7" height="7"/>
+      <rect x="14" y="3" width="7" height="7"/>
+      <rect x="3" y="14" width="7" height="7"/>
+      <rect x="14" y="14" width="7" height="7"/>
+    </svg>
+  </button>
+  
+  <!-- Floating Search Bar (Mobile) -->
+  <div class="floating-search-bar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <span class="search-placeholder">Search...</span>
+  </div>
+  
+  <!-- Search Modal (Mobile) -->
+  <div id="search-modal" class="search-modal">
+    <div class="search-modal-content">
+      <div class="search-modal-header">
+        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" id="search-modal-input" class="search-modal-input" placeholder="Search pages..." autocomplete="off">
+        <button id="search-modal-close" class="search-modal-close" aria-label="Close search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div id="search-modal-results" class="search-modal-results">
+        <div class="search-modal-empty">Type to search...</div>
+      </div>
+    </div>
+  </div>
   
   <!-- Sidebar Overlay -->
   <div id="sidebar-overlay" class="sidebar-overlay"></div>
