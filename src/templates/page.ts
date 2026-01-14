@@ -2040,6 +2040,48 @@ body {
   color: var(--text-muted);
 }
 
+/* Light mode overrides for search modal */
+[data-theme="light"] .search-modal-header {
+  background: var(--bg-primary);
+  border-bottom-color: var(--border-subtle);
+}
+
+[data-theme="light"] .search-modal-input {
+  background: var(--bg-secondary);
+  border-color: rgba(224, 224, 224, 0.8);
+}
+
+[data-theme="light"] .search-modal-input:focus {
+  border-color: var(--accent);
+  background: var(--bg-tertiary);
+}
+
+[data-theme="light"] .search-modal-header .search-icon {
+  color: var(--text-muted);
+}
+
+[data-theme="light"] .search-modal-close {
+  background: var(--bg-secondary);
+  border-color: rgba(224, 224, 224, 0.8);
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .search-modal-close:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--border);
+}
+
+[data-theme="light"] .search-modal-result-item {
+  background: var(--bg-secondary);
+  border-color: rgba(224, 224, 224, 0.8);
+}
+
+[data-theme="light"] .search-modal-result-item:active,
+[data-theme="light"] .search-modal-result-item.selected {
+  border-color: var(--accent);
+  box-shadow: 0 2px 8px var(--accent-subtle);
+}
+
 /* Search Modal - Command Palette Style */
 .search-modal {
   display: none;
@@ -2091,11 +2133,11 @@ body {
 .search-modal-header {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 1rem 1rem 1rem 1rem;
-  padding-top: calc(1rem + var(--safe-area-top));
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  padding-top: calc(var(--space-md) + var(--safe-area-top));
   background: var(--bg-primary);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0;
   position: relative;
 }
@@ -2103,20 +2145,20 @@ body {
 .search-modal-input {
   flex: 1;
   background: var(--bg-secondary);
-  border: 2px solid var(--border);
-  border-radius: 12px;
-  padding: 0.9rem 1rem 0.9rem 3rem;
+  border: 1.5px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  padding: 0.75rem 0.9rem 0.75rem 2.75rem;
   color: var(--text-primary);
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-family: inherit;
-  transition: all 0.2s ease;
+  transition: all var(--transition-base) ease;
 }
 
 .search-modal-input:focus {
   outline: none;
   border-color: var(--accent);
   background: var(--bg-tertiary);
-  box-shadow: 0 0 0 4px var(--accent-subtle);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
 }
 
 .search-modal-input::placeholder {
@@ -2126,35 +2168,42 @@ body {
 
 .search-modal-header .search-icon {
   position: absolute;
-  left: 1.75rem;
+  left: 1.5rem;
   pointer-events: none;
-  color: var(--text-secondary);
-  width: 20px;
-  height: 20px;
+  color: var(--text-muted);
+  width: 18px;
+  height: 18px;
 }
 
 .search-modal-close {
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--border-subtle);
   color: var(--text-secondary);
-  padding: 0.5rem;
+  padding: var(--space-sm);
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: all 0.15s ease;
+  transition: all var(--transition-base) ease;
+  width: 36px;
+  height: 36px;
+}
+
+.search-modal-close:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--border);
 }
 
 .search-modal-close:active {
   background: var(--bg-hover);
-  transform: scale(0.95);
+  transform: scale(0.92);
 }
 
 .search-modal-close svg {
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
 }
 
 .search-modal-results {
@@ -2180,13 +2229,13 @@ body {
 
 .search-modal-result-item {
   display: block;
-  padding: 1rem 1.25rem;
+  padding: var(--space-md) var(--space-lg);
   text-decoration: none;
-  border-radius: 10px;
-  margin-bottom: 0.5rem;
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-sm);
   background: var(--bg-secondary);
-  border: 1px solid var(--border-subtle);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1.5px solid var(--border-subtle);
+  transition: all var(--transition-base) cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
   animation: resultFadeIn 0.3s ease backwards;
