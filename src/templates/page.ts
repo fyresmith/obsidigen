@@ -183,7 +183,7 @@ body {
 }
 
 .sidebar-header {
-  padding: 1.25rem 1rem;
+  padding: 1.25rem 1rem 0.75rem 1rem;
   flex-shrink: 0;
 }
 
@@ -1699,6 +1699,79 @@ body {
   opacity: 1;
 }
 
+/* ============================================
+   DESKTOP DEFAULT STYLES
+   ============================================ */
+
+/* Desktop: Make carousel wrapper not interfere with grid layout */
+.mobile-carousel-wrapper {
+  display: block;
+  position: static;
+  overflow: visible;
+  inset: auto;
+}
+
+.mobile-carousel {
+  display: block;
+  width: 100%;
+  height: auto;
+  transition: none;
+  will-change: auto;
+}
+
+/* Desktop: Ensure grid layout works properly */
+.wiki-layout {
+  display: grid;
+}
+
+/* Desktop-only elements (hidden on mobile) */
+.desktop-only {
+  display: block;
+}
+
+/* Desktop search trigger button */
+.desktop-search-trigger {
+  width: 100%;
+  padding: 0.6rem 0.75rem 0.6rem 2.25rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--transition-base) ease;
+}
+
+.desktop-search-trigger:hover {
+  border-color: var(--border);
+  background: var(--bg-hover);
+}
+
+.desktop-search-trigger:active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+/* Desktop search modal styles */
+@media (min-width: 769px) {
+  .search-modal {
+    align-items: flex-start;
+    padding-top: 10vh;
+  }
+  
+  .search-modal-content {
+    max-width: 600px;
+    width: 90%;
+    margin: 0 auto;
+  }
+}
+
+/* ============================================
+   RESPONSIVE BREAKPOINTS
+   ============================================ */
+
 @media (max-width: 1280px) {
   .wiki-layout {
     grid-template-columns: var(--sidebar-width) 1fr var(--backlinks-width);
@@ -1906,6 +1979,11 @@ body {
   
   /* Hide old overlay */
   .sidebar-overlay {
+    display: none !important;
+  }
+  
+  /* Hide desktop-only elements on mobile */
+  .desktop-only {
     display: none !important;
   }
 }
@@ -2760,6 +2838,9 @@ let contentArea = null;
 let justSwiped = false; // Flag to prevent phantom clicks after swipes
 
 function initMobile() {
+  // Only initialize mobile carousel on mobile viewports
+  if (window.innerWidth > 768) return;
+  
   carousel = document.querySelector('.mobile-carousel');
   contentArea = document.querySelector('.content-area');
   if (!carousel) return; // Not on mobile
@@ -2861,6 +2942,8 @@ function goToPanel(panelIndex, animate = true) {
 // ============================================
 
 function initSwipeGestures() {
+  // Only enable swipe gestures on mobile viewports
+  if (window.innerWidth > 768) return;
   if (!carousel) return; // Not on mobile
   
   let touchStartX = 0;
@@ -2996,25 +3079,28 @@ function initSwipeGestures() {
     }
     // BEHAVIOR 2: On side panels - require 5% swipe distance to change panels
     else {
-      // Check if swipe distance meets threshold
+      // Calculate distances to each panel position
+      const leftPanelPos = 0;
+      const centerPanelPos = -83.33;
+      const rightPanelPos = -166.67;
+      
+      const distToLeft = Math.abs(currentTransform - leftPanelPos);
+      const distToCenter = Math.abs(currentTransform - centerPanelPos);
+      const distToRight = Math.abs(currentTransform - rightPanelPos);
+      
+      // Determine which panel is closest
+      let targetPanel = startPanel;
+      if (distToLeft < distToCenter && distToLeft < distToRight) {
+        targetPanel = 0;
+      } else if (distToCenter < distToRight) {
+        targetPanel = 1;
+      } else {
+        targetPanel = 2;
+      }
+      
+      // Only allow panel change if swipe distance meets 5% threshold
       if (Math.abs(diffX) > swipeThreshold) {
-        // Calculate distances to each panel position
-        const leftPanelPos = 0;
-        const centerPanelPos = -83.33;
-        const rightPanelPos = -166.67;
-        
-        const distToLeft = Math.abs(currentTransform - leftPanelPos);
-        const distToCenter = Math.abs(currentTransform - centerPanelPos);
-        const distToRight = Math.abs(currentTransform - rightPanelPos);
-        
-        // Snap to nearest panel based on where we dragged to
-        if (distToLeft < distToCenter && distToLeft < distToRight) {
-          newPanel = 0;
-        } else if (distToCenter < distToRight) {
-          newPanel = 1;
-        } else {
-          newPanel = 2;
-        }
+        newPanel = targetPanel;
       } else {
         // Not enough distance - stay on current panel
         newPanel = startPanel;
@@ -3050,6 +3136,9 @@ function initSwipeGestures() {
 // ============================================
 
 function initScrollBasedUI() {
+  // Only initialize scroll-based UI on mobile viewports
+  if (window.innerWidth > 768) return;
+  
   const contentArea = document.querySelector('.content-area');
   const floatingButtons = document.querySelectorAll('.floating-nav-btn');
   const floatingSearch = document.querySelector('.floating-search-bar');
@@ -3097,14 +3186,19 @@ let searchDebounceTimer = null;
 let recentPagesCache = null;
 
 function initSearchModal() {
+  // Initialize for both desktop and mobile
   const floatingSearchBar = document.querySelector('.floating-search-bar');
+  const desktopSearchTrigger = document.getElementById('desktop-search-trigger');
   searchModal = document.getElementById('search-modal');
   searchModalInput = document.getElementById('search-modal-input');
   searchModalResults = document.getElementById('search-modal-results');
   const closeBtn = document.getElementById('search-modal-close');
   
-  // Open modal when clicking floating search bar
+  // Open modal when clicking floating search bar (mobile)
   floatingSearchBar?.addEventListener('click', openSearchModal);
+  
+  // Open modal when clicking desktop search trigger (desktop)
+  desktopSearchTrigger?.addEventListener('click', openSearchModal);
   
   // Close modal
   closeBtn?.addEventListener('click', closeSearchModal);
@@ -4131,6 +4225,24 @@ function layout(title: string, content: string, options: { vaultName?: string; c
       <div class="wiki-layout">
     <!-- Left Sidebar -->
     <aside class="sidebar-left">
+      <div class="sidebar-header desktop-only">
+        <h1 class="vault-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+          </svg>
+          ${escapeHtml(vaultName)}
+        </h1>
+        <div class="search-container">
+          <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <button type="button" class="desktop-search-trigger" id="desktop-search-trigger">
+            Search pages...
+          </button>
+        </div>
+      </div>
       <nav id="tree-nav" class="tree-container">
         <div style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem;">Loading...</div>
       </nav>
