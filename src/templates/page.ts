@@ -2715,9 +2715,15 @@ function updateThemeButton(theme) {
 
 // Update iOS Safari status bar / theme-color meta tag
 // Colors must match CSS variables for seamless panel transitions
-function updateThemeColor(panelIndex = 1) {
+function updateThemeColor(panelIndex = 1, customColor = null) {
   const meta = document.getElementById('theme-color-meta');
   if (!meta) return;
+  
+  // If custom color is provided, use it (for search modal, etc)
+  if (customColor) {
+    meta.setAttribute('content', customColor);
+    return;
+  }
   
   const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
   
@@ -3351,6 +3357,9 @@ async function openSearchModal() {
   searchModalInput?.focus();
   document.body.style.overflow = 'hidden';
   
+  // Update iOS status bar to match modal background
+  updateThemeColor(1, '#0d0d0d');
+  
   // Reset state
   searchSelectedIndex = -1;
   if (searchModalInput) searchModalInput.value = '';
@@ -3365,6 +3374,9 @@ function closeSearchModal() {
   searchSelectedIndex = -1;
   searchResultElements = [];
   document.body.style.overflow = '';
+  
+  // Restore iOS status bar to original color
+  updateThemeColor();
   
   // Clear results
   if (searchModalResults) {
