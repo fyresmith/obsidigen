@@ -239,7 +239,7 @@ body {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0.5rem 0;
+  padding: 1rem 0 2rem 0;
 }
 
 .tree-container::-webkit-scrollbar {
@@ -588,7 +588,7 @@ body {
   background: var(--bg-primary);
   height: 100vh;
   overflow-y: auto;
-  padding: 1.25rem 1rem;
+  padding: 1.25rem 1rem 2rem 1rem;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -1632,9 +1632,13 @@ function renderTree(nodes) {
 function initSearch() {
   const searchInput = document.getElementById('search-input');
   const searchResults = document.getElementById('search-results');
+  
+  // Return early if search elements don't exist
+  if (!searchInput || !searchResults) return;
+  
   let debounceTimer;
 
-  searchInput?.addEventListener('input', (e) => {
+  searchInput.addEventListener('input', (e) => {
     clearTimeout(debounceTimer);
     const query = e.target.value.trim();
     
@@ -1666,13 +1670,13 @@ function initSearch() {
     }, 150);
   });
 
-  searchInput?.addEventListener('blur', () => {
-    setTimeout(() => searchResults?.classList.remove('active'), 200);
+  searchInput.addEventListener('blur', () => {
+    setTimeout(() => searchResults.classList.remove('active'), 200);
   });
 
-  searchInput?.addEventListener('keydown', (e) => {
+  searchInput.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-      searchResults?.classList.remove('active');
+      searchResults.classList.remove('active');
       searchInput.blur();
     }
   });
@@ -1681,7 +1685,7 @@ function initSearch() {
   document.addEventListener('keydown', (e) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
       e.preventDefault();
-      searchInput?.focus();
+      searchInput.focus();
     }
   });
 }
@@ -2563,24 +2567,6 @@ function layout(title: string, content: string, options: { vaultName?: string; c
       <div class="wiki-layout">
     <!-- Left Sidebar -->
     <aside class="sidebar-left">
-      <div class="sidebar-header">
-        <div class="vault-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-            <path d="M2 17l10 5 10-5"/>
-            <path d="M2 12l10 5 10-5"/>
-          </svg>
-          ${escapeHtml(vaultName)}
-        </div>
-        <div class="search-container">
-          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-          <input type="text" id="search-input" class="search-input" placeholder="Search... (⌘K)" autocomplete="off">
-          <div id="search-results" class="search-results"></div>
-        </div>
-      </div>
       <nav id="tree-nav" class="tree-container">
         <div style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem;">Loading...</div>
       </nav>
