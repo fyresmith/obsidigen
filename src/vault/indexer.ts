@@ -3,7 +3,17 @@
 import { readFileSync, readdirSync, statSync } from 'fs';
 import { join, relative, basename, extname } from 'path';
 import matter from 'gray-matter';
+import Fuse, { FuseResult } from 'fuse.js';
 import { extractWikiLinks } from './parser.js';
+
+interface SearchData {
+  slug: string;
+  title: string;
+  aliases: string;
+  path: string;
+  content: string;
+  contentExcerpt: string;
+}
 
 export interface PageInfo {
   title: string;
@@ -13,6 +23,7 @@ export interface PageInfo {
   aliases: string[];
   frontmatter: Record<string, any>;
   lastModified: Date;
+  contentExcerpt?: string;
 }
 
 export interface GraphNode {
@@ -33,6 +44,8 @@ export class VaultIndex {
   private titleToSlug: Map<string, string> = new Map();
   private backlinks: Map<string, Set<string>> = new Map();
   private forwardLinks: Map<string, Set<string>> = new Map();
+  private pageContent: Map<string, string> = new Map();
+  private fuse: Fuse<SearchData> | null = null;
   
   constructor(public readonly vaultPath: string) {}
   
@@ -46,6 +59,7 @@ export class VaultIndex {
     this.titleToSlug.clear();
     this.backlinks.clear();
     this.forwardLinks.clear();
+    this.pageContent.clear();
     
     // First pass: index all pages
     await this.indexDirectory(this.vaultPath);
@@ -72,6 +86,9 @@ export class VaultIndex {
       
       this.forwardLinks.set(slug, resolvedLinks);
     }
+    
+    // Initialize Fuse.js for fuzzy search
+    this.initializeFuse();
   }
   
   /**
@@ -100,8 +117,8 @@ export class VaultIndex {
    */
   private async indexFile(filePath: string): Promise<void> {
     try {
-      const content = readFileSync(filePath, 'utf-8');
-      const { data: frontmatter } = matter(content);
+      const rawContent = readFileSync(filePath, 'utf-8');
+      const { data: frontmatter, content } = matter(rawContent);
       
       const relativePath = relative(this.vaultPath, filePath);
       const fileName = basename(filePath, '.md');
@@ -127,6 +144,12 @@ export class VaultIndex {
         }
       }
       
+      // Extract content excerpt (first 500 chars of clean text)
+      const contentExcerpt = this.extractExcerpt(content);
+      
+      // Store full content for search
+      this.pageContent.set(slug, content);
+      
       const pageInfo: PageInfo = {
         title,
         slug,
@@ -135,6 +158,7 @@ export class VaultIndex {
         aliases,
         frontmatter,
         lastModified: statSync(filePath).mtime,
+        contentExcerpt,
       };
       
       // Register in indexes
@@ -151,6 +175,38 @@ export class VaultIndex {
     } catch (error) {
       console.error(`Error indexing ${filePath}:`, error);
     }
+  }
+  
+  /**
+   * Extract clean text excerpt from markdown content
+   */
+  private extractExcerpt(content: string, maxLength: number = 500): string {
+    // Remove frontmatter if any (shouldn't be present after matter() but just in case)
+    let clean = content.replace(/^---[\s\S]*?---\s*/, '');
+    
+    // Remove markdown syntax
+    clean = clean
+      .replace(/^#{1,6}\s+/gm, '') // Headers
+      .replace(/\*\*(.+?)\*\*/g, '$1') // Bold
+      .replace(/\*(.+?)\*/g, '$1') // Italic
+      .replace(/_(.+?)_/g, '$1') // Italic
+      .replace(/\[(.+?)\]\(.+?\)/g, '$1') // Links
+      .replace(/\[\[(.+?)\]\]/g, '$1') // Wiki links
+      .replace(/`(.+?)`/g, '$1') // Inline code
+      .replace(/^```[\s\S]*?```$/gm, '') // Code blocks
+      .replace(/^>\s+/gm, '') // Blockquotes
+      .replace(/^[-*+]\s+/gm, '') // Lists
+      .replace(/^\d+\.\s+/gm, '') // Numbered lists
+      .replace(/==(.+?)==/g, '$1') // Highlights
+      .replace(/\n{3,}/g, '\n\n') // Multiple newlines
+      .trim();
+    
+    // Truncate to max length
+    if (clean.length > maxLength) {
+      clean = clean.substring(0, maxLength).trim() + '...';
+    }
+    
+    return clean;
   }
   
   /**
@@ -179,6 +235,9 @@ export class VaultIndex {
           this.backlinks.get(targetSlug)?.delete(oldSlug);
         }
       }
+      
+      // Remove old content
+      this.pageContent.delete(oldSlug);
     }
     
     // Re-index the file
@@ -206,6 +265,9 @@ export class VaultIndex {
       
       this.forwardLinks.set(oldSlug, resolvedLinks);
     }
+    
+    // Reinitialize Fuse with updated data
+    this.initializeFuse();
   }
   
   /**
@@ -227,6 +289,7 @@ export class VaultIndex {
     this.titleToSlug.delete(pageInfo.title.toLowerCase());
     this.slugToPath.delete(slug);
     this.pages.delete(slug);
+    this.pageContent.delete(slug);
     
     // Remove backlinks
     const links = this.forwardLinks.get(slug);
@@ -237,6 +300,9 @@ export class VaultIndex {
     }
     this.forwardLinks.delete(slug);
     this.backlinks.delete(slug);
+    
+    // Reinitialize Fuse with updated data
+    this.initializeFuse();
   }
   
   /**
@@ -345,50 +411,108 @@ export class VaultIndex {
   }
   
   /**
-   * Search pages by query
+   * Initialize Fuse.js for fuzzy search
+   */
+  private initializeFuse(): void {
+    const searchData = Array.from(this.pages.values()).map(page => ({
+      slug: page.slug,
+      title: page.title,
+      aliases: page.aliases.join(' '),
+      path: page.relativePath,
+      content: this.pageContent.get(page.slug) || '',
+      contentExcerpt: page.contentExcerpt || '',
+    }));
+    
+    this.fuse = new Fuse(searchData, {
+      keys: [
+        { name: 'title', weight: 0.5 },
+        { name: 'aliases', weight: 0.3 },
+        { name: 'path', weight: 0.1 },
+        { name: 'content', weight: 0.1 },
+      ],
+      threshold: 0.4,
+      includeScore: true,
+      includeMatches: true,
+      minMatchCharLength: 2,
+      ignoreLocation: true,
+    });
+  }
+  
+  /**
+   * Search pages by query using fuzzy matching
    */
   search(query: string, limit: number = 20): PageInfo[] {
-    const normalized = query.toLowerCase().trim();
-    const results: Array<{ page: PageInfo; score: number }> = [];
-    
-    for (const page of this.pages.values()) {
-      let score = 0;
-      
-      // Title match (highest priority)
-      if (page.title.toLowerCase().includes(normalized)) {
-        score += 100;
-        if (page.title.toLowerCase() === normalized) {
-          score += 50;
-        }
-        if (page.title.toLowerCase().startsWith(normalized)) {
-          score += 25;
-        }
-      }
-      
-      // Alias match
-      for (const alias of page.aliases) {
-        if (alias.toLowerCase().includes(normalized)) {
-          score += 75;
-          if (alias.toLowerCase() === normalized) {
-            score += 50;
-          }
-        }
-      }
-      
-      // Path match
-      if (page.relativePath.toLowerCase().includes(normalized)) {
-        score += 25;
-      }
-      
-      if (score > 0) {
-        results.push({ page, score });
-      }
+    const trimmed = query.trim();
+    if (!trimmed || !this.fuse) {
+      return [];
     }
     
-    return results
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit)
-      .map(r => r.page);
+    const results = this.fuse.search(trimmed, { limit });
+    return results.map((result: FuseResult<SearchData>) => this.pages.get(result.item.slug)!).filter(Boolean);
+  }
+  
+  /**
+   * Enhanced search with snippets and match context
+   */
+  searchWithSnippets(query: string, limit: number = 20): Array<{
+    page: PageInfo;
+    score: number;
+    snippet: string;
+    matches: Array<{ key: string; value: string; indices: number[][] }>;
+  }> {
+    const trimmed = query.trim();
+    if (!trimmed || !this.fuse) {
+      return [];
+    }
+    
+    const results = this.fuse.search(trimmed, { limit });
+    
+    return results.map((result: FuseResult<SearchData>) => {
+      const page = this.pages.get(result.item.slug)!;
+      const matches = result.matches || [];
+      
+      // Generate snippet from best match
+      let snippet = page.contentExcerpt || '';
+      const contentMatch = matches.find((m: any) => m.key === 'content');
+      
+      if (contentMatch && contentMatch.indices && contentMatch.indices.length > 0) {
+        const content = this.pageContent.get(page.slug) || '';
+        snippet = this.generateSnippet(content, contentMatch.indices[0], query);
+      } else if (matches.length > 0 && matches[0].value) {
+        snippet = matches[0].value;
+      }
+      
+      return {
+        page,
+        score: result.score || 0,
+        snippet,
+        matches: matches.map((m: any) => ({
+          key: m.key || '',
+          value: m.value || '',
+          indices: m.indices || [],
+        })),
+      };
+    });
+  }
+  
+  /**
+   * Generate a snippet with context around a match
+   */
+  private generateSnippet(content: string, matchIndices: number[], query: string, contextChars: number = 80): string {
+    const [start, end] = matchIndices;
+    const snippetStart = Math.max(0, start - contextChars);
+    const snippetEnd = Math.min(content.length, end + contextChars);
+    
+    let snippet = content.substring(snippetStart, snippetEnd).trim();
+    
+    // Add ellipsis if truncated
+    if (snippetStart > 0) snippet = '...' + snippet;
+    if (snippetEnd < content.length) snippet = snippet + '...';
+    
+    // Clean up whitespace and newlines
+    snippet = snippet.replace(/\s+/g, ' ').trim();
+    
+    return snippet;
   }
   
   /**

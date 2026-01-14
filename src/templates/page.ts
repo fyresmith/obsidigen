@@ -1225,21 +1225,21 @@ body {
   flex: 1;
 }
 
-/* Search Modal */
+/* Search Modal - Command Palette Style */
 .search-modal {
   display: none;
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: var(--modal-backdrop);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .search-modal.active {
   display: flex;
   flex-direction: column;
-  animation: fadeIn 0.2s ease;
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .search-modal-content {
@@ -1249,59 +1249,77 @@ body {
   background: var(--bg-primary);
   display: flex;
   flex-direction: column;
-  animation: slideUp 0.3s ease;
+  animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
 }
 
 @keyframes slideUp {
   from {
     transform: translateY(100%);
+    opacity: 0;
   }
   to {
     transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
 .search-modal-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1.25rem 1rem;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-subtle);
+  gap: 0.75rem;
+  padding: 1rem 1rem 1rem 1rem;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+  position: relative;
 }
 
 .search-modal-input {
   flex: 1;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
+  border: 2px solid var(--border);
   border-radius: 12px;
-  padding: 0.85rem 1rem 0.85rem 3rem;
+  padding: 0.9rem 1rem 0.9rem 3rem;
   color: var(--text-primary);
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-family: inherit;
+  transition: all 0.2s ease;
 }
 
 .search-modal-input:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-subtle);
+  background: var(--bg-tertiary);
+  box-shadow: 0 0 0 4px var(--accent-subtle);
 }
 
 .search-modal-input::placeholder {
   color: var(--text-muted);
+  font-weight: 400;
 }
 
 .search-modal-header .search-icon {
   position: absolute;
-  left: 2rem;
+  left: 1.75rem;
   pointer-events: none;
+  color: var(--text-secondary);
+  width: 20px;
+  height: 20px;
 }
 
 .search-modal-close {
-  background: transparent;
-  border: none;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
   color: var(--text-secondary);
   padding: 0.5rem;
   cursor: pointer;
@@ -1310,57 +1328,201 @@ body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: all 0.15s ease;
 }
 
 .search-modal-close:active {
   background: var(--bg-hover);
+  transform: scale(0.95);
 }
 
 .search-modal-close svg {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
 }
 
 .search-modal-results {
   flex: 1;
   overflow-y: auto;
-  padding: 0.5rem;
+  padding: 0.75rem 1rem 1rem 1rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.search-modal-results::-webkit-scrollbar {
+  width: 8px;
+}
+
+.search-modal-results::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.search-modal-results::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
 }
 
 .search-modal-result-item {
   display: block;
   padding: 1rem 1.25rem;
   text-decoration: none;
-  border-radius: 8px;
+  border-radius: 10px;
   margin-bottom: 0.5rem;
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
-  transition: all 0.15s;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+  animation: resultFadeIn 0.3s ease backwards;
 }
 
-.search-modal-result-item:active {
-  background: var(--bg-hover);
-  transform: scale(0.98);
+.search-modal-result-item:nth-child(1) { animation-delay: 0.05s; }
+.search-modal-result-item:nth-child(2) { animation-delay: 0.08s; }
+.search-modal-result-item:nth-child(3) { animation-delay: 0.11s; }
+.search-modal-result-item:nth-child(4) { animation-delay: 0.14s; }
+.search-modal-result-item:nth-child(5) { animation-delay: 0.17s; }
+
+@keyframes resultFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.search-modal-result-item:active,
+.search-modal-result-item.selected {
+  background: var(--bg-tertiary);
+  border-color: var(--accent);
+  box-shadow: 0 2px 12px var(--accent-subtle);
+  transform: translateY(-1px);
+}
+
+.search-modal-result-item.selected {
+  background: var(--accent-subtle);
+}
+
+.search-modal-result-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .search-modal-result-title {
   color: var(--text-primary);
   font-weight: 600;
-  font-size: 1rem;
-  margin-bottom: 0.25rem;
+  font-size: 1.05rem;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.search-modal-result-title mark {
+  background: var(--accent);
+  color: var(--bg-primary);
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+  font-weight: 700;
+}
+
+.search-modal-result-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.search-modal-result-date {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  white-space: nowrap;
 }
 
 .search-modal-result-path {
   color: var(--text-muted);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-family: var(--font-mono);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.search-modal-result-path::before {
+  content: "📁";
+  font-size: 0.85em;
+  opacity: 0.6;
+}
+
+.search-modal-result-snippet {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-top: 0.5rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.search-modal-result-snippet mark {
+  background: var(--accent-subtle);
+  color: var(--accent);
+  padding: 0.1em 0.2em;
+  border-radius: 2px;
+  font-weight: 500;
 }
 
 .search-modal-empty {
   text-align: center;
   color: var(--text-muted);
   padding: 3rem 1rem;
-  font-size: 0.95rem;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.search-modal-empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.search-modal-section-title {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.75rem 0.25rem 0.5rem 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.search-modal-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--text-muted);
+}
+
+.search-modal-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Panel Indicators */
@@ -2047,12 +2209,16 @@ function initScrollBasedUI() {
 }
 
 // ============================================
-// SEARCH MODAL
+// SEARCH MODAL - ENHANCED
 // ============================================
 
 let searchModal = null;
 let searchModalInput = null;
 let searchModalResults = null;
+let searchSelectedIndex = -1;
+let searchResultElements = [];
+let searchDebounceTimer = null;
+let recentPagesCache = null;
 
 function initSearchModal() {
   const floatingSearchBar = document.querySelector('.floating-search-bar');
@@ -2072,58 +2238,283 @@ function initSearchModal() {
     }
   });
   
-  // ESC key to close
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && searchModal?.classList.contains('active')) {
-      closeSearchModal();
-    }
-  });
+  // Keyboard navigation
+  searchModalInput?.addEventListener('keydown', handleSearchKeydown);
   
-  // Search functionality
-  let debounceTimer;
-  searchModalInput?.addEventListener('input', (e) => {
-    clearTimeout(debounceTimer);
-    const query = e.target.value.trim();
-    
-    if (!query) {
-      searchModalResults.innerHTML = '<div class="search-modal-empty">Type to search...</div>';
-      return;
+  // Search functionality with debouncing
+  searchModalInput?.addEventListener('input', handleSearchInput);
+}
+
+function handleSearchKeydown(e) {
+  const results = searchResultElements;
+  
+  // ESC - close modal
+  if (e.key === 'Escape') {
+    closeSearchModal();
+    return;
+  }
+  
+  // Arrow Down
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (results.length > 0) {
+      searchSelectedIndex = Math.min(searchSelectedIndex + 1, results.length - 1);
+      updateSearchSelection();
     }
-    
-    debounceTimer = setTimeout(async () => {
-      try {
-        const res = await fetch('/api/search?q=' + encodeURIComponent(query));
-        const data = await res.json();
-        
-        if (data.results.length > 0) {
-          searchModalResults.innerHTML = data.results.map(r => \`
-            <a href="/\${r.slug}" class="search-modal-result-item">
-              <div class="search-modal-result-title">\${escapeHtml(r.title)}</div>
-              <div class="search-modal-result-path">\${escapeHtml(r.path)}</div>
-            </a>
-          \`).join('');
-        } else {
-          searchModalResults.innerHTML = '<div class="search-modal-empty">No results found</div>';
-        }
-      } catch (err) {
-        console.error('Search error:', err);
-        searchModalResults.innerHTML = '<div class="search-modal-empty">Search error</div>';
+  }
+  
+  // Arrow Up
+  if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (results.length > 0) {
+      searchSelectedIndex = Math.max(searchSelectedIndex - 1, -1);
+      updateSearchSelection();
+    }
+  }
+  
+  // Enter - navigate to selected result
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    if (searchSelectedIndex >= 0 && results[searchSelectedIndex]) {
+      const href = results[searchSelectedIndex].getAttribute('href');
+      if (href) {
+        window.location.href = href;
       }
-    }, 200);
+    }
+  }
+}
+
+function updateSearchSelection() {
+  searchResultElements.forEach((el, idx) => {
+    if (idx === searchSelectedIndex) {
+      el.classList.add('selected');
+      el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    } else {
+      el.classList.remove('selected');
+    }
   });
 }
 
-function openSearchModal() {
+async function handleSearchInput(e) {
+  clearTimeout(searchDebounceTimer);
+  const query = e.target.value.trim();
+  
+  // Reset selection
+  searchSelectedIndex = -1;
+  
+  if (!query) {
+    await showRecentPages();
+    return;
+  }
+  
+  // Show loading state
+  showSearchLoading();
+  
+  searchDebounceTimer = setTimeout(async () => {
+    try {
+      const res = await fetch('/api/search?q=' + encodeURIComponent(query) + '&limit=20');
+      const data = await res.json();
+      
+      if (data.results.length > 0) {
+        renderSearchResults(data.results, query);
+      } else {
+        showNoResults(query);
+      }
+    } catch (err) {
+      console.error('Search error:', err);
+      showSearchError();
+    }
+  }, 200);
+}
+
+function showSearchLoading() {
+  if (!searchModalResults) return;
+  searchModalResults.innerHTML = \`
+    <div class="search-modal-loading">
+      <div class="search-modal-spinner"></div>
+    </div>
+  \`;
+  searchResultElements = [];
+}
+
+function renderSearchResults(results, query) {
+  if (!searchModalResults) return;
+  
+  const html = results.map((r, idx) => {
+    const title = highlightMatches(escapeHtml(r.title), query);
+    const snippet = r.snippet ? highlightMatches(escapeHtml(r.snippet), query) : r.contentExcerpt || '';
+    const date = r.lastModified ? formatRelativeDate(new Date(r.lastModified)) : '';
+    
+    return \`
+      <a href="/\${r.slug}" class="search-modal-result-item" data-index="\${idx}">
+        <div class="search-modal-result-header">
+          <div class="search-modal-result-title">\${title}</div>
+          \${date ? \`<div class="search-modal-result-meta">
+            <div class="search-modal-result-date">\${date}</div>
+          </div>\` : ''}
+        </div>
+        <div class="search-modal-result-path">\${escapeHtml(r.path)}</div>
+        \${snippet ? \`<div class="search-modal-result-snippet">\${snippet}</div>\` : ''}
+      </a>
+    \`;
+  }).join('');
+  
+  searchModalResults.innerHTML = html;
+  searchResultElements = Array.from(searchModalResults.querySelectorAll('.search-modal-result-item'));
+}
+
+async function showRecentPages() {
+  if (!searchModalResults) return;
+  
+  // Use cached recent pages if available
+  if (recentPagesCache) {
+    renderRecentPages(recentPagesCache);
+    return;
+  }
+  
+  try {
+    const res = await fetch('/api/search/recent?limit=10');
+    const data = await res.json();
+    recentPagesCache = data.results;
+    renderRecentPages(data.results);
+  } catch (err) {
+    console.error('Error fetching recent pages:', err);
+    searchModalResults.innerHTML = \`
+      <div class="search-modal-empty">
+        <div class="search-modal-empty-icon">🔍</div>
+        Type to search your notes...
+      </div>
+    \`;
+    searchResultElements = [];
+  }
+}
+
+function renderRecentPages(pages) {
+  if (!searchModalResults || !pages || pages.length === 0) {
+    searchModalResults.innerHTML = \`
+      <div class="search-modal-empty">
+        <div class="search-modal-empty-icon">🔍</div>
+        Type to search your notes...
+      </div>
+    \`;
+    searchResultElements = [];
+    return;
+  }
+  
+  const html = \`
+    <div class="search-modal-section-title">Recent Pages</div>
+    \${pages.map((r, idx) => {
+      const date = formatRelativeDate(new Date(r.lastModified));
+      const excerpt = r.contentExcerpt || '';
+      
+      return \`
+        <a href="/\${r.slug}" class="search-modal-result-item" data-index="\${idx}">
+          <div class="search-modal-result-header">
+            <div class="search-modal-result-title">\${escapeHtml(r.title)}</div>
+            <div class="search-modal-result-meta">
+              <div class="search-modal-result-date">\${date}</div>
+            </div>
+          </div>
+          <div class="search-modal-result-path">\${escapeHtml(r.path)}</div>
+          \${excerpt ? \`<div class="search-modal-result-snippet">\${escapeHtml(excerpt)}</div>\` : ''}
+        </a>
+      \`;
+    }).join('')}
+  \`;
+  
+  searchModalResults.innerHTML = html;
+  searchResultElements = Array.from(searchModalResults.querySelectorAll('.search-modal-result-item'));
+}
+
+function showNoResults(query) {
+  if (!searchModalResults) return;
+  searchModalResults.innerHTML = \`
+    <div class="search-modal-empty">
+      <div class="search-modal-empty-icon">🔍</div>
+      No results for <strong>"\${escapeHtml(query)}"</strong>
+      <br><br>
+      Try different keywords or check your spelling
+    </div>
+  \`;
+  searchResultElements = [];
+}
+
+function showSearchError() {
+  if (!searchModalResults) return;
+  searchModalResults.innerHTML = \`
+    <div class="search-modal-empty">
+      <div class="search-modal-empty-icon">⚠️</div>
+      Search error occurred
+      <br><br>
+      Please try again
+    </div>
+  \`;
+  searchResultElements = [];
+}
+
+function highlightMatches(text, query) {
+  if (!query) return text;
+  
+  // Split query into words
+  const words = query.toLowerCase().split(/\\s+/).filter(w => w.length > 0);
+  
+  let result = text;
+  words.forEach(word => {
+    // Escape regex special characters
+    const specialChars = /[\\\\^$.*+?()\\[\\]{}|]/g;
+    const escapedWord = word.replace(specialChars, '\\\\\\\\$&');
+    const regex = new RegExp('(' + escapedWord + ')', 'gi');
+    result = result.replace(regex, '<mark>$1</mark>');
+  });
+  
+  return result;
+}
+
+function formatRelativeDate(date) {
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+  
+  if (days > 7) {
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  } else if (days > 0) {
+    return \`\${days}d ago\`;
+  } else if (hours > 0) {
+    return \`\${hours}h ago\`;
+  } else if (minutes > 0) {
+    return \`\${minutes}m ago\`;
+  } else {
+    return 'Just now';
+  }
+}
+
+async function openSearchModal() {
   searchModal?.classList.add('active');
   searchModalInput?.focus();
   document.body.style.overflow = 'hidden';
+  
+  // Reset state
+  searchSelectedIndex = -1;
+  if (searchModalInput) searchModalInput.value = '';
+  
+  // Show recent pages
+  await showRecentPages();
 }
 
 function closeSearchModal() {
   searchModal?.classList.remove('active');
   if (searchModalInput) searchModalInput.value = '';
-  if (searchModalResults) searchModalResults.innerHTML = '<div class="search-modal-empty">Type to search...</div>';
+  searchSelectedIndex = -1;
+  searchResultElements = [];
   document.body.style.overflow = '';
+  
+  // Clear results
+  if (searchModalResults) {
+    searchModalResults.innerHTML = '';
+  }
 }
 
 // ============================================
