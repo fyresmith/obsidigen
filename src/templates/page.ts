@@ -57,6 +57,15 @@ const styles = `
   --floating-offset: 16px;
   --search-bar-height: 52px;
   --modal-backdrop: rgba(0, 0, 0, 0.8);
+  
+  /* Safe area insets for mobile browsers */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+  
+  /* Bottom padding for content to prevent toolbar clipping */
+  --content-bottom-padding: 2rem;
 }
 
 [data-theme="light"] {
@@ -100,6 +109,7 @@ body {
   color: var(--text-primary);
   line-height: 1.7;
   min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height for mobile */
   overflow: hidden;
 }
 
@@ -240,6 +250,7 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
   padding: 1rem 0 2rem 0;
+  padding-bottom: calc(2rem + var(--safe-area-bottom));
 }
 
 .tree-container::-webkit-scrollbar {
@@ -389,6 +400,7 @@ body {
 
 .content-wrapper {
   padding: 2.5rem 3rem;
+  padding-bottom: calc(var(--content-bottom-padding) + var(--safe-area-bottom));
 }
 
 /* Article */
@@ -741,6 +753,7 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
   padding: 1rem;
+  padding-bottom: calc(1rem + var(--safe-area-bottom));
 }
 
 .panel-content-area::-webkit-scrollbar {
@@ -1023,6 +1036,7 @@ body {
 .panel-selector-container {
   flex-shrink: 0;
   padding: 0.75rem 1rem;
+  padding-bottom: calc(0.75rem + var(--safe-area-bottom));
   border-top: 1px solid var(--border-subtle);
   background: var(--bg-primary);
 }
@@ -1361,6 +1375,11 @@ body {
 }
 
 @media (max-width: 768px) {
+  /* Override content bottom padding for mobile with floating UI */
+  :root {
+    --content-bottom-padding: calc(var(--search-bar-height) + var(--floating-offset) * 2 + 1.5rem);
+  }
+  
   body {
     overflow: hidden;
   }
@@ -1375,6 +1394,7 @@ body {
   .mobile-carousel {
     display: flex;
     height: 100vh;
+    height: 100dvh; /* Dynamic viewport height */
     width: calc(83.33vw + 100vw + 83.33vw); /* left (5/6) + center (full) + right (5/6) */
     transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     will-change: transform;
@@ -1394,17 +1414,20 @@ body {
     flex-direction: column;
     width: 83.33vw;
     height: 100vh;
+    height: 100dvh;
     flex-shrink: 0;
     position: relative;
     transform: none;
     background: var(--bg-secondary);
     border-right: 1px solid var(--border-subtle);
+    padding-bottom: var(--safe-area-bottom);
   }
   
   /* Panel 1: Main Content - full screen */
   .mobile-carousel .content-area {
     width: 100vw;
     height: 100vh;
+    height: 100dvh;
     flex-shrink: 0;
     border-left: none;
     border-right: none;
@@ -1435,11 +1458,13 @@ body {
     flex-direction: column;
     width: 83.33vw;
     height: 100vh;
+    height: 100dvh;
     flex-shrink: 0;
     position: relative;
     transform: none;
     background: var(--bg-secondary);
     border-left: 1px solid var(--border-subtle);
+    padding-bottom: var(--safe-area-bottom);
   }
   
   .wiki-layout {
@@ -1449,6 +1474,15 @@ body {
   
   .mobile-header {
     display: none; /* Hidden - using floating buttons instead */
+  }
+  
+  /* Add top safe area to sidebar headers on mobile */
+  .sidebar-left .sidebar-header {
+    padding-top: calc(1.25rem + var(--safe-area-top));
+  }
+  
+  .sidebar-right .properties-infographic {
+    padding-top: calc(0.75rem + var(--safe-area-top));
   }
   
   /* Enhanced touch targets for tree navigation */
@@ -1467,7 +1501,8 @@ body {
   
   .content-wrapper {
     padding: 1.5rem 1.25rem;
-    padding-top: calc(var(--floating-btn-size) + var(--floating-offset) + 1rem);
+    padding-top: calc(var(--floating-btn-size) + var(--floating-offset) + 1rem + var(--safe-area-top));
+    padding-bottom: calc(var(--search-bar-height) + var(--floating-offset) * 2 + 2rem + var(--safe-area-bottom));
   }
   
   .article-title {
@@ -1526,19 +1561,19 @@ body {
 }
 
 .floating-left-btn {
-  top: var(--floating-offset);
-  left: var(--floating-offset);
+  top: calc(var(--floating-offset) + var(--safe-area-top));
+  left: calc(var(--floating-offset) + var(--safe-area-left));
 }
 
 .floating-right-btn {
-  top: var(--floating-offset);
-  right: var(--floating-offset);
+  top: calc(var(--floating-offset) + var(--safe-area-top));
+  right: calc(var(--floating-offset) + var(--safe-area-right));
 }
 
 .floating-search-bar {
   display: none;
   position: fixed;
-  bottom: var(--floating-offset);
+  bottom: calc(var(--floating-offset) + var(--safe-area-bottom));
   left: var(--floating-offset);
   right: var(--floating-offset);
   height: var(--search-bar-height);
@@ -1638,6 +1673,7 @@ body {
   align-items: center;
   gap: 0.75rem;
   padding: 1rem 1rem 1rem 1rem;
+  padding-top: calc(1rem + var(--safe-area-top));
   background: var(--bg-primary);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
@@ -1705,6 +1741,7 @@ body {
   flex: 1;
   overflow-y: auto;
   padding: 0.75rem 1rem 1rem 1rem;
+  padding-bottom: calc(1rem + var(--safe-area-bottom));
   -webkit-overflow-scrolling: touch;
 }
 
@@ -1889,7 +1926,7 @@ body {
 .panel-indicators {
   display: none;
   position: fixed;
-  bottom: calc(var(--search-bar-height) + var(--floating-offset) + 0.5rem);
+  bottom: calc(var(--search-bar-height) + var(--floating-offset) + 0.5rem + var(--safe-area-bottom));
   left: 50%;
   transform: translateX(-50%);
   z-index: 1001;
@@ -3520,7 +3557,7 @@ function layout(title: string, content: string, options: { vaultName?: string; c
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>${escapeHtml(title)} - ${escapeHtml(vaultName)}</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
