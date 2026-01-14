@@ -1725,6 +1725,7 @@ let currentPanel = 1; // 0 = left nav, 1 = content (default), 2 = right widgets
 let carousel = null;
 let panelIndicators = [];
 let contentArea = null;
+let justSwiped = false; // Flag to prevent phantom clicks after swipes
 
 function initMobile() {
   carousel = document.querySelector('.mobile-carousel');
@@ -1759,6 +1760,14 @@ function initMobile() {
   
   // Click on dimmed content area to return to center
   contentArea?.addEventListener('click', (e) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/fc9b174b-f9cc-4c04-a679-f74cd7c1f0d2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'page.ts:contentAreaClick',message:'Content area clicked',data:{justSwiped,isDimmed:contentArea.classList.contains('dimmed'),currentPanel,isSwiping},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
+    // Ignore phantom clicks that fire after swipe gestures
+    if (justSwiped) {
+      return;
+    }
+    
     if (contentArea.classList.contains('dimmed') && currentPanel !== 1) {
       e.preventDefault();
       e.stopPropagation();
@@ -1768,6 +1777,9 @@ function initMobile() {
 }
 
 function goToPanel(panelIndex, animate = true) {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/fc9b174b-f9cc-4c04-a679-f74cd7c1f0d2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'page.ts:goToPanel',message:'goToPanel called',data:{panelIndex,animate,currentPanelBefore:currentPanel,carouselTransformBefore:carousel?.style.transform},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
+  // #endregion
   if (!carousel || !contentArea) return;
   
   // Clamp to valid range
@@ -1838,6 +1850,7 @@ function initSwipeGestures() {
   let touchStartTime = 0;
   let isSwiping = false;
   let startTransform = 0;
+  let startPanel = 1; // Track which panel we started on
   
   // Swipe anywhere on the document
   document.addEventListener('touchstart', (e) => {
@@ -1849,11 +1862,16 @@ function initSwipeGestures() {
     touchCurrentX = touchStartX;
     touchStartTime = Date.now();
     isSwiping = false;
+    startPanel = currentPanel; // Remember which panel we started on
     
     // Get current transform value
     const transform = carousel.style.transform || 'translateX(-83.33vw)';
-    const match = transform.match(/translateX\(([-\d.]+)vw\)/);
+    const match = transform.match(/translateX\\(([\\-\\d.]+)vw\\)/);
     startTransform = match ? parseFloat(match[1]) : -83.33;
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/fc9b174b-f9cc-4c04-a679-f74cd7c1f0d2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'page.ts:touchstart',message:'Touch started',data:{currentPanel,startPanel,rawTransform:carousel.style.transform,parsedTransform:startTransform,matchFound:!!match},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C'})}).catch(()=>{});
+    // #endregion
     
     // Disable transitions during drag
     carousel.classList.add('no-transition');
@@ -1870,6 +1888,9 @@ function initSwipeGestures() {
     
     // Check if horizontal swipe (more horizontal than vertical)
     if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
+      // #region agent log
+      if (!isSwiping) fetch('http://127.0.0.1:7242/ingest/fc9b174b-f9cc-4c04-a679-f74cd7c1f0d2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'page.ts:touchmove',message:'isSwiping set to true',data:{diffX,startPanel,currentPanel},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
       isSwiping = true;
       touchCurrentX = touchX;
       
@@ -1903,6 +1924,9 @@ function initSwipeGestures() {
   }, { passive: false });
   
   document.addEventListener('touchend', (e) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/fc9b174b-f9cc-4c04-a679-f74cd7c1f0d2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'page.ts:touchend:entry',message:'Touch ended - entry',data:{isSwiping,touchStartX,startPanel,currentPanel},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,D'})}).catch(()=>{});
+    // #endregion
     if (!isSwiping || !touchStartX || e.target.closest('.search-modal')) {
       touchStartX = 0;
       touchStartY = 0;
@@ -1911,28 +1935,74 @@ function initSwipeGestures() {
     
     const touchEndX = e.changedTouches[0].clientX;
     const diffX = touchEndX - touchStartX;
-    const diffTime = Date.now() - touchStartTime;
-    const velocity = Math.abs(diffX) / diffTime;
     
-    // Determine new panel based on swipe distance and velocity
+    // Get current transform to see where we actually dragged to
+    const transform = carousel.style.transform || 'translateX(-83.33vw)';
+    const match = transform.match(/translateX\\(([\\-\\d.]+)vw\\)/);
+    const currentTransform = match ? parseFloat(match[1]) : -83.33;
+    
     let newPanel = currentPanel;
     
-    // Threshold: 30% of screen width or high velocity (> 0.5px/ms)
-    const threshold = window.innerWidth * 0.3;
-    const isSignificantSwipe = Math.abs(diffX) > threshold || velocity > 0.5;
+    // SHORT THRESHOLD: 15% of screen width
+    const shortThreshold = window.innerWidth * 0.15;
     
-    if (isSignificantSwipe) {
-      if (diffX > 0) {
-        // Swiped right - go to previous panel
-        newPanel = Math.max(0, currentPanel - 1);
+    // BEHAVIOR 1: On middle panel - short swipe triggers panel change
+    if (startPanel === 1) {
+      if (Math.abs(diffX) > shortThreshold) {
+        if (diffX > 0) {
+          // Swipe right - open left panel
+          newPanel = 0;
+        } else {
+          // Swipe left - open right panel
+          newPanel = 2;
+        }
       } else {
-        // Swiped left - go to next panel
-        newPanel = Math.min(2, currentPanel + 1);
+        // Not enough distance - stay on middle panel
+        newPanel = 1;
+      }
+    }
+    // BEHAVIOR 2: On side panels - follow the swipe gesture, snap to nearest
+    else {
+      // Calculate distances to each panel position
+      const leftPanelPos = 0;
+      const centerPanelPos = -83.33;
+      const rightPanelPos = -166.67;
+      
+      const distToLeft = Math.abs(currentTransform - leftPanelPos);
+      const distToCenter = Math.abs(currentTransform - centerPanelPos);
+      const distToRight = Math.abs(currentTransform - rightPanelPos);
+      
+      // Snap to nearest panel based on where we dragged to
+      if (distToLeft < distToCenter && distToLeft < distToRight) {
+        newPanel = 0;
+      } else if (distToCenter < distToRight) {
+        newPanel = 1;
+      } else {
+        newPanel = 2;
       }
     }
     
-    // Snap to panel
-    goToPanel(newPanel, true);
+    // Only snap to panel if it actually changed, otherwise re-enable transitions
+    const panelChanged = newPanel !== startPanel;
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/fc9b174b-f9cc-4c04-a679-f74cd7c1f0d2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'page.ts:touchend:decision',message:'Panel decision made',data:{startPanel,currentPanel,newPanel,panelChanged,diffX,currentTransform},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B,C'})}).catch(()=>{});
+    // #endregion
+    
+    if (panelChanged) {
+      goToPanel(newPanel, true);
+      
+      // Prevent phantom clicks after panel changes
+      justSwiped = true;
+      setTimeout(() => {
+        justSwiped = false;
+      }, 400);
+    } else {
+      // Panel didn't change - just snap back to current position smoothly
+      carousel.classList.remove('no-transition');
+      carousel.classList.add('transitioning');
+      goToPanel(currentPanel, true);
+    }
     
     touchStartX = 0;
     touchStartY = 0;
