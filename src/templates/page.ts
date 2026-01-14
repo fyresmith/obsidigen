@@ -278,7 +278,7 @@ body {
 .tree-list .tree-list {
   padding-left: 0.8rem;
   border-left: 1px solid var(--border-subtle);
-  margin-left: 0.5rem;
+  margin-left: calc(0.6rem + 7px); /* Align with center of chevron (padding + half chevron width) */
 }
 
 .tree-item {
@@ -1518,6 +1518,11 @@ body {
   .tree-chevron {
     width: 16px;
     height: 16px;
+  }
+  
+  /* Adjust vertical line alignment for larger touch targets */
+  .tree-list .tree-list {
+    margin-left: calc(0.65rem + 8px); /* Align with center of larger mobile chevron */
   }
   
   .content-wrapper {
