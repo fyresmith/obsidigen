@@ -471,8 +471,8 @@ body {
   font-size: var(--text-4xl);
   font-weight: 700;
   color: var(--text-primary);
-  font-family: var(--font-serif);
-  letter-spacing: -0.02em;
+  font-family: var(--font-sans);
+  letter-spacing: -0.025em;
   line-height: 1.15;
 }
 
@@ -487,18 +487,20 @@ body {
   margin: var(--space-2xl) 0 var(--space-lg);
   font-weight: 700;
   color: var(--text-primary);
-  font-family: var(--font-serif);
-  letter-spacing: -0.02em;
+  font-family: var(--font-sans);
+  letter-spacing: -0.025em;
   line-height: 1.2;
+  border-bottom: 2px solid var(--border-subtle);
+  padding-bottom: var(--space-sm);
 }
 
 .content h2 {
   font-size: var(--text-2xl);
   margin: var(--space-xl) 0 var(--space-md);
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
-  font-family: var(--font-serif);
-  letter-spacing: -0.01em;
+  font-family: var(--font-sans);
+  letter-spacing: -0.02em;
   line-height: 1.25;
 }
 
@@ -507,14 +509,39 @@ body {
   margin: var(--space-xl) 0 var(--space-sm);
   font-weight: 600;
   color: var(--text-primary);
+  font-family: var(--font-sans);
+  letter-spacing: -0.015em;
   line-height: 1.3;
 }
 
-.content h4, .content h5, .content h6 {
+.content h4 {
   font-size: var(--text-lg);
   margin: var(--space-lg) 0 var(--space-sm);
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  letter-spacing: -0.01em;
+  line-height: 1.4;
+}
+
+.content h5 {
+  font-size: var(--text-base);
+  margin: var(--space-lg) 0 var(--space-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  line-height: 1.4;
+}
+
+.content h6 {
+  font-size: var(--text-base);
+  margin: var(--space-lg) 0 var(--space-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-style: italic;
   line-height: 1.4;
 }
 
