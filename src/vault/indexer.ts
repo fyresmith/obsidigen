@@ -101,6 +101,15 @@ export class VaultIndex {
       // Skip hidden files/directories
       if (entry.startsWith('.')) continue;
       
+      // Skip node_modules
+      if (entry === 'node_modules') continue;
+      
+      // Skip package files
+      if (entry === 'package.json' || entry === 'package-lock.json') continue;
+      
+      // Skip Python files
+      if (entry.endsWith('.py')) continue;
+      
       const fullPath = join(dirPath, entry);
       const stat = statSync(fullPath);
       
