@@ -1838,6 +1838,8 @@ body {
     width: 83.33vw;
     height: 100vh;
     height: 100dvh;
+    min-height: 100vh;
+    min-height: 100dvh;
     flex-shrink: 0;
     position: relative;
     transform: none;
@@ -1862,6 +1864,11 @@ body {
   
   .sidebar-right .properties-infographic {
     padding-top: calc(0.75rem + var(--safe-area-top));
+  }
+  
+  /* Panel selector container - match sidebar background on mobile */
+  .sidebar-right .panel-selector-container {
+    background: var(--bg-secondary);
   }
   
   /* Enhanced touch targets for tree navigation */
