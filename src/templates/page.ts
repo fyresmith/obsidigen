@@ -2776,7 +2776,6 @@ async function showRecentPages() {
     console.error('Error fetching recent pages:', err);
     searchModalResults.innerHTML = \`
       <div class="search-modal-empty">
-        <div class="search-modal-empty-icon">🔍</div>
         Type to search your notes...
       </div>
     \`;
@@ -2788,7 +2787,6 @@ function renderRecentPages(pages) {
   if (!searchModalResults || !pages || pages.length === 0) {
     searchModalResults.innerHTML = \`
       <div class="search-modal-empty">
-        <div class="search-modal-empty-icon">🔍</div>
         Type to search your notes...
       </div>
     \`;
@@ -2825,7 +2823,6 @@ function showNoResults(query) {
   if (!searchModalResults) return;
   searchModalResults.innerHTML = \`
     <div class="search-modal-empty">
-      <div class="search-modal-empty-icon">🔍</div>
       No results for <strong>"\${escapeHtml(query)}"</strong>
       <br><br>
       Try different keywords or check your spelling
@@ -2838,7 +2835,6 @@ function showSearchError() {
   if (!searchModalResults) return;
   searchModalResults.innerHTML = \`
     <div class="search-modal-empty">
-      <div class="search-modal-empty-icon">⚠️</div>
       Search error occurred
       <br><br>
       Please try again
