@@ -2156,9 +2156,6 @@ body {
 
 .search-modal-input:focus {
   outline: none;
-  border-color: var(--accent);
-  background: var(--bg-tertiary);
-  box-shadow: 0 0 0 3px var(--accent-subtle);
 }
 
 .search-modal-input::placeholder {
@@ -2168,7 +2165,7 @@ body {
 
 .search-modal-header .search-icon {
   position: absolute;
-  left: 1.5rem;
+  left: 2.0rem;
   pointer-events: none;
   color: var(--text-muted);
   width: 18px;
@@ -2179,16 +2176,15 @@ body {
   background: var(--bg-secondary);
   border: 1.5px solid var(--border-subtle);
   color: var(--text-secondary);
-  padding: var(--space-sm);
+  padding: 0.75rem 0.9rem;
   cursor: pointer;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   transition: all var(--transition-base) ease;
-  width: 36px;
-  height: 36px;
+  height: 47px;
 }
 
 .search-modal-close:hover {
@@ -2229,12 +2225,12 @@ body {
 
 .search-modal-result-item {
   display: block;
-  padding: var(--space-md) var(--space-lg);
+  padding: 1rem 1.25rem;
   text-decoration: none;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   margin-bottom: var(--space-sm);
-  background: var(--bg-secondary);
-  border: 1.5px solid var(--border-subtle);
+  background: transparent;
+  border: 1px solid var(--border-subtle);
   transition: all var(--transition-base) cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
@@ -2260,14 +2256,14 @@ body {
 
 .search-modal-result-item:active,
 .search-modal-result-item.selected {
-  background: var(--bg-tertiary);
+  background: var(--bg-secondary);
   border-color: var(--accent);
-  box-shadow: 0 2px 12px var(--accent-subtle);
   transform: translateY(-1px);
 }
 
 .search-modal-result-item.selected {
-  background: var(--accent-subtle);
+  background: var(--bg-secondary);
+  border-color: var(--accent);
 }
 
 .search-modal-result-header {
@@ -2280,8 +2276,8 @@ body {
 
 .search-modal-result-title {
   color: var(--text-primary);
-  font-weight: 600;
-  font-size: 1.05rem;
+  font-weight: 500;
+  font-size: 0.95rem;
   line-height: 1.4;
   flex: 1;
 }
@@ -2304,30 +2300,34 @@ body {
 
 .search-modal-result-date {
   color: var(--text-muted);
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-family: var(--font-mono);
   white-space: nowrap;
 }
 
 .search-modal-result-path {
   color: var(--text-muted);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-family: var(--font-mono);
   margin-bottom: 0.5rem;
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.5rem;
 }
 
 .search-modal-result-path::before {
-  content: "📁";
-  font-size: 0.85em;
-  opacity: 0.6;
+  content: "";
+  width: 3px;
+  height: 3px;
+  background: var(--text-muted);
+  border-radius: 50%;
+  opacity: 0.5;
+  margin-top: 0.45em;
 }
 
 .search-modal-result-snippet {
   color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   line-height: 1.5;
   margin-top: 0.5rem;
   display: -webkit-box;
@@ -4039,7 +4039,7 @@ function layout(title: string, content: string, options: { vaultName?: string; c
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0f0f0f" id="theme-color-meta">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>${escapeHtml(title)} - ${escapeHtml(vaultName)}</title>
