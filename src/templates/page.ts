@@ -581,17 +581,16 @@ body {
 .callout-note { border-left-color: var(--text-muted); }
 
 /* ============================================
-   RIGHT SIDEBAR - WIDGETS
+   RIGHT SIDEBAR - REDESIGNED PANEL SYSTEM
    ============================================ */
 
 .sidebar-right {
   background: var(--bg-primary);
   height: 100vh;
-  overflow-y: auto;
-  padding: 1.25rem 1rem 2rem 1rem;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  padding: 0;
 }
 
 .sidebar-right::-webkit-scrollbar {
@@ -607,58 +606,169 @@ body {
   border-radius: 3px;
 }
 
-/* Widget Base - Clean wiki style */
-.widget {
-  /* No background/border - clean look */
+/* ============================================
+   PROPERTIES INFOGRAPHIC - Compact Top Bar
+   ============================================ */
+
+.properties-infographic {
+  flex-shrink: 0;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
 }
 
-.widget-header {
+.properties-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  font-size: 0.72rem;
+}
+
+.prop-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding-bottom: 0.4rem;
-  margin-bottom: 0.4rem;
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.widget-title {
-  font-size: 0.7rem;
-  font-weight: 600;
+  gap: 0.3rem;
   color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
-.widget-count {
+.prop-item svg {
+  width: 12px;
+  height: 12px;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.prop-item .prop-value {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.prop-item .prop-value a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.prop-item .prop-value a:hover {
+  text-decoration: underline;
+}
+
+.prop-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.prop-tag {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  background: var(--accent-subtle);
+  color: var(--accent);
+  border-radius: 10px;
   font-size: 0.65rem;
+  font-weight: 500;
+}
+
+.properties-empty {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-style: italic;
+  opacity: 0.7;
+}
+
+/* Expandable properties on click */
+.properties-expanded {
+  display: none;
+  padding-top: 0.5rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.properties-infographic.expanded .properties-expanded {
+  display: block;
+}
+
+.properties-expand-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  transition: color 0.1s;
+}
+
+.properties-expand-btn:hover {
+  color: var(--text-primary);
+}
+
+.properties-expand-btn svg {
+  width: 10px;
+  height: 10px;
+  transition: transform 0.2s;
+}
+
+.properties-infographic.expanded .properties-expand-btn svg {
+  transform: rotate(180deg);
+}
+
+.properties-detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.2rem 0;
+  font-size: 0.72rem;
+}
+
+.properties-detail-key {
   color: var(--text-muted);
 }
 
-.widget-content {
-  max-height: 220px;
-  overflow-y: auto;
+.properties-detail-value {
+  color: var(--text-secondary);
+  text-align: right;
 }
 
-.widget-content::-webkit-scrollbar {
+/* ============================================
+   PANEL CONTENT AREA - Scrollable
+   ============================================ */
+
+.panel-content-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1rem;
+}
+
+.panel-content-area::-webkit-scrollbar {
   width: 4px;
 }
 
-.widget-content::-webkit-scrollbar-track {
+.panel-content-area::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.widget-content::-webkit-scrollbar-thumb {
+.panel-content-area::-webkit-scrollbar-thumb {
   background: var(--border);
   border-radius: 2px;
 }
 
-.widget-empty {
-  color: var(--text-muted);
-  font-size: 0.78rem;
-  font-style: italic;
+/* Panel containers - only one visible at a time */
+.panel {
+  display: none;
 }
 
-/* On This Page Widget (TOC) */
+.panel.active {
+  display: block;
+}
+
+/* ============================================
+   OUTLINE PANEL (TOC)
+   ============================================ */
+
 .toc-list {
   list-style: none;
 }
@@ -669,24 +779,27 @@ body {
 
 .toc-link {
   display: block;
-  padding: 0.2rem 0;
+  padding: 0.25rem 0;
   padding-left: 0.6rem;
   color: var(--text-secondary);
   text-decoration: none;
-  font-size: 0.78rem;
-  line-height: 1.45;
-  transition: color 0.1s;
-  border-left: 1px solid var(--border-subtle);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  transition: all 0.15s;
+  border-left: 2px solid var(--border-subtle);
   margin-left: 0;
 }
 
 .toc-link:hover {
   color: var(--accent);
+  background: var(--accent-subtle);
 }
 
 .toc-link.active {
   color: var(--accent);
   border-left-color: var(--accent);
+  background: var(--accent-subtle);
+  font-weight: 500;
 }
 
 .toc-link[data-level="2"] {
@@ -694,103 +807,329 @@ body {
 }
 
 .toc-link[data-level="3"] {
-  padding-left: 1.1rem;
-  font-size: 0.75rem;
+  padding-left: 1.2rem;
+  font-size: 0.78rem;
 }
 
 .toc-link[data-level="4"],
 .toc-link[data-level="5"],
 .toc-link[data-level="6"] {
-  padding-left: 1.6rem;
-  font-size: 0.72rem;
+  padding-left: 1.8rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
 }
 
-/* Properties Widget */
-.properties-table {
-  width: 100%;
-  font-size: 0.78rem;
-}
-
-.properties-table tr {
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.properties-table tr:last-child {
-  border-bottom: none;
-}
-
-.properties-table td {
-  padding: 0.3rem 0;
-  vertical-align: top;
-}
-
-.properties-key {
+.panel-empty {
   color: var(--text-muted);
-  font-weight: 500;
-  width: 38%;
-  padding-right: 0.5rem;
+  font-size: 0.85rem;
+  font-style: italic;
+  text-align: center;
+  padding: 2rem 1rem;
 }
 
-.properties-value {
-  color: var(--text-secondary);
-  word-break: break-word;
-}
+/* ============================================
+   OUTLINKS PANEL
+   ============================================ */
 
-.properties-value a {
-  color: var(--accent);
-  text-decoration: none;
-}
-
-.properties-value a:hover {
-  text-decoration: underline;
-}
-
-.properties-tag {
-  display: inline-block;
-  padding: 0.1rem 0.35rem;
-  background: var(--accent-subtle);
-  color: var(--accent);
-  border-radius: 3px;
-  font-size: 0.7rem;
-  margin: 0.1rem 0.15rem 0.1rem 0;
-}
-
-/* Backlinks Widget */
-.backlinks-list {
+.outlinks-list {
   list-style: none;
 }
 
-.backlinks-list li {
-  margin: 0;
+.outlink-item {
+  margin-bottom: 0.5rem;
 }
 
-.backlinks-list a {
+.outlink-card {
   display: block;
-  padding: 0.2rem 0;
-  color: var(--text-secondary);
+  padding: 0.6rem 0.75rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
   text-decoration: none;
-  font-size: 0.78rem;
-  transition: color 0.1s;
+  transition: all 0.15s;
 }
 
-.backlinks-list a:hover {
+.outlink-card:hover {
+  border-color: var(--accent);
+  background: var(--bg-tertiary);
+  transform: translateX(2px);
+}
+
+.outlink-title {
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 0.85rem;
+  margin-bottom: 0.2rem;
+}
+
+.outlink-path {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+}
+
+.outlink-path svg {
+  width: 10px;
+  height: 10px;
+  opacity: 0.6;
+}
+
+/* ============================================
+   BACKLINKS PANEL - Search-like UI
+   ============================================ */
+
+.backlinks-section {
+  margin-bottom: 1rem;
+}
+
+.backlinks-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.backlinks-section-header:hover .backlinks-section-title {
   color: var(--accent);
 }
 
-/* Theme Toggle */
-.theme-toggle-container {
-  margin-top: auto;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--border-subtle);
+.backlinks-section-chevron {
+  width: 12px;
+  height: 12px;
+  color: var(--text-muted);
+  transition: transform 0.2s;
+  flex-shrink: 0;
 }
 
-.theme-toggle {
+.backlinks-section.collapsed .backlinks-section-chevron {
+  transform: rotate(-90deg);
+}
+
+.backlinks-section-title {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  transition: color 0.1s;
+}
+
+.backlinks-section-count {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.backlinks-section-cards {
+  padding-left: 0.5rem;
+  border-left: 1px solid var(--border-subtle);
+  margin-left: 0.35rem;
+  margin-top: 0.35rem;
+}
+
+.backlinks-section.collapsed .backlinks-section-cards {
+  display: none;
+}
+
+.backlink-card {
+  display: block;
+  padding: 0.5rem 0.65rem;
+  margin-bottom: 0.4rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 5px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.backlink-card:hover {
+  border-color: var(--accent);
+  background: var(--bg-tertiary);
+}
+
+.backlink-card:last-child {
+  margin-bottom: 0;
+}
+
+.backlink-section-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  margin-bottom: 0.2rem;
+  font-family: var(--font-mono);
+}
+
+.backlink-snippet {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.backlink-snippet mark {
+  background: var(--accent-subtle);
+  color: var(--accent);
+  padding: 0.05rem 0.15rem;
+  border-radius: 2px;
+  font-weight: 500;
+}
+
+.backlinks-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.backlinks-loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-right: 0.5rem;
+}
+
+/* ============================================
+   PANEL SELECTOR DROPDOWN - Fixed Bottom
+   ============================================ */
+
+.panel-selector-container {
+  flex-shrink: 0;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-primary);
+}
+
+.panel-selector {
+  position: relative;
+}
+
+.panel-selector-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  transition: all 0.15s;
+}
+
+.panel-selector-btn:hover {
+  border-color: var(--accent);
+  background: var(--bg-hover);
+}
+
+.panel-selector-btn.open {
+  border-color: var(--accent);
+  border-radius: 6px 6px 0 0;
+}
+
+.panel-selector-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.panel-selector-label svg {
+  width: 14px;
+  height: 14px;
+  color: var(--text-muted);
+}
+
+.panel-selector-chevron {
+  width: 14px;
+  height: 14px;
+  color: var(--text-muted);
+  transition: transform 0.2s;
+}
+
+.panel-selector-btn.open .panel-selector-chevron {
+  transform: rotate(180deg);
+}
+
+.panel-selector-dropdown {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--accent);
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  overflow: hidden;
+  display: none;
+  z-index: 10;
+  box-shadow: 0 -4px 12px var(--shadow);
+}
+
+.panel-selector-dropdown.open {
+  display: block;
+  animation: dropdownSlideUp 0.15s ease;
+}
+
+@keyframes dropdownSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.panel-selector-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  transition: all 0.1s;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.panel-selector-option:last-child {
+  border-bottom: none;
+}
+
+.panel-selector-option:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.panel-selector-option.active {
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+
+.panel-selector-option svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Theme Toggle - now inline with panel selector */
+.theme-toggle-inline {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  padding: 0.4rem;
+  padding: 0.5rem 0;
+  margin-top: 0.5rem;
   background: transparent;
   border: none;
   cursor: pointer;
@@ -799,13 +1138,14 @@ body {
   font-family: inherit;
   width: 100%;
   transition: color 0.1s;
+  border-top: 1px solid var(--border-subtle);
 }
 
-.theme-toggle:hover {
+.theme-toggle-inline:hover {
   color: var(--text-primary);
 }
 
-.theme-toggle svg {
+.theme-toggle-inline svg {
   width: 14px;
   height: 14px;
 }
@@ -2542,7 +2882,7 @@ function initTOC() {
   
   const headings = article.querySelectorAll('h1, h2, h3, h4, h5, h6');
   if (headings.length === 0) {
-    tocContainer.innerHTML = '<p class="widget-empty">No headings</p>';
+    tocContainer.innerHTML = '<p class="panel-empty">No headings on this page</p>';
     return;
   }
   
@@ -2803,6 +3143,205 @@ function hidePreview() {
 }
 
 // ============================================
+// PANEL SELECTOR (Outline/Outlinks/Backlinks)
+// ============================================
+
+let currentRightPanel = 'outline';
+let outlinksLoaded = false;
+let backlinksLoaded = false;
+
+function initPanelSelector() {
+  const selectorBtn = document.getElementById('panel-selector-btn');
+  const dropdown = document.getElementById('panel-dropdown');
+  const options = dropdown?.querySelectorAll('.panel-selector-option');
+  const panels = document.querySelectorAll('.panel');
+  
+  if (!selectorBtn || !dropdown) return;
+  
+  // Toggle dropdown
+  selectorBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = dropdown.classList.contains('open');
+    dropdown.classList.toggle('open');
+    selectorBtn.classList.toggle('open');
+  });
+  
+  // Close dropdown when clicking outside
+  document.addEventListener('click', () => {
+    dropdown.classList.remove('open');
+    selectorBtn.classList.remove('open');
+  });
+  
+  // Handle option selection
+  options?.forEach(option => {
+    option.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const panelType = option.dataset.panel;
+      if (panelType) {
+        switchPanel(panelType);
+        dropdown.classList.remove('open');
+        selectorBtn.classList.remove('open');
+      }
+    });
+  });
+  
+  // Initialize with outline panel
+  switchPanel('outline');
+}
+
+function switchPanel(panelType) {
+  const panels = document.querySelectorAll('.panel');
+  const options = document.querySelectorAll('.panel-selector-option');
+  const labelEl = document.getElementById('panel-selector-label');
+  
+  currentRightPanel = panelType;
+  
+  // Update panels visibility
+  panels.forEach(panel => {
+    panel.classList.toggle('active', panel.dataset.panel === panelType);
+  });
+  
+  // Update dropdown options
+  options.forEach(option => {
+    option.classList.toggle('active', option.dataset.panel === panelType);
+  });
+  
+  // Update button label
+  const activeOption = document.querySelector(\`.panel-selector-option[data-panel="\${panelType}"]\`);
+  if (labelEl && activeOption) {
+    const svg = activeOption.querySelector('svg')?.outerHTML || '';
+    const text = panelType.charAt(0).toUpperCase() + panelType.slice(1);
+    labelEl.innerHTML = svg + text;
+  }
+  
+  // Lazy load data for panels
+  if (panelType === 'outlinks' && !outlinksLoaded) {
+    loadOutlinks();
+  } else if (panelType === 'backlinks' && !backlinksLoaded) {
+    loadBacklinks();
+  }
+}
+
+async function loadOutlinks() {
+  const container = document.getElementById('outlinks-content');
+  const countEl = document.getElementById('outlinks-count');
+  if (!container) return;
+  
+  const currentSlug = document.body.dataset.currentSlug;
+  if (!currentSlug) {
+    container.innerHTML = '<p class="panel-empty">No links found</p>';
+    return;
+  }
+  
+  container.innerHTML = '<div class="backlinks-loading"><div class="backlinks-loading-spinner"></div>Loading...</div>';
+  
+  try {
+    const res = await fetch('/api/backlinks/outlinks/' + encodeURIComponent(currentSlug));
+    const data = await res.json();
+    
+    if (data.outlinks && data.outlinks.length > 0) {
+      container.innerHTML = \`
+        <ul class="outlinks-list">
+          \${data.outlinks.map(link => \`
+            <li class="outlink-item">
+              <a href="/\${link.slug}" class="outlink-card">
+                <div class="outlink-title">\${escapeHtml(link.title)}</div>
+                <div class="outlink-path">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                  </svg>
+                  \${escapeHtml(link.folder)}
+                </div>
+              </a>
+            </li>
+          \`).join('')}
+        </ul>
+      \`;
+      if (countEl) countEl.textContent = data.outlinks.length.toString();
+      outlinksLoaded = true;
+    } else {
+      container.innerHTML = '<p class="panel-empty">This page has no outgoing links</p>';
+    }
+  } catch (err) {
+    console.error('Error loading outlinks:', err);
+    container.innerHTML = '<p class="panel-empty">Error loading links</p>';
+  }
+}
+
+async function loadBacklinks() {
+  const container = document.getElementById('backlinks-content');
+  const countEl = document.getElementById('backlinks-count');
+  if (!container) return;
+  
+  const currentSlug = document.body.dataset.currentSlug;
+  if (!currentSlug) {
+    container.innerHTML = '<p class="panel-empty">No backlinks found</p>';
+    return;
+  }
+  
+  container.innerHTML = '<div class="backlinks-loading"><div class="backlinks-loading-spinner"></div>Loading...</div>';
+  
+  try {
+    const res = await fetch('/api/backlinks/' + encodeURIComponent(currentSlug));
+    const data = await res.json();
+    
+    if (data.backlinks && data.backlinks.length > 0) {
+      container.innerHTML = data.backlinks.map((bl, idx) => \`
+        <div class="backlinks-section" data-section="\${idx}">
+          <div class="backlinks-section-header" onclick="toggleBacklinkSection(\${idx})">
+            <svg class="backlinks-section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+            <span class="backlinks-section-title">\${escapeHtml(bl.page.title)}</span>
+            <span class="backlinks-section-count">\${bl.mentions.length}</span>
+          </div>
+          <div class="backlinks-section-cards">
+            \${bl.mentions.map(mention => \`
+              <a href="/\${bl.page.slug}" class="backlink-card">
+                \${mention.section ? \`<div class="backlink-section-label"># \${escapeHtml(mention.section)}</div>\` : ''}
+                <div class="backlink-snippet">\${highlightBacklinkSnippet(mention.snippet, mention.highlightStart, mention.highlightEnd)}</div>
+              </a>
+            \`).join('')}
+          </div>
+        </div>
+      \`).join('');
+      
+      // Update count in dropdown
+      if (countEl) {
+        const totalMentions = data.backlinks.reduce((sum, bl) => sum + bl.mentions.length, 0);
+        countEl.textContent = data.backlinks.length.toString();
+      }
+      
+      backlinksLoaded = true;
+    } else {
+      container.innerHTML = '<p class="panel-empty">No pages link to this page</p>';
+    }
+  } catch (err) {
+    console.error('Error loading backlinks:', err);
+    container.innerHTML = '<p class="panel-empty">Error loading backlinks</p>';
+  }
+}
+
+function toggleBacklinkSection(idx) {
+  const section = document.querySelector(\`.backlinks-section[data-section="\${idx}"]\`);
+  if (section) {
+    section.classList.toggle('collapsed');
+  }
+}
+
+function highlightBacklinkSnippet(snippet, start, end) {
+  if (start === undefined || end === undefined || start >= end) {
+    return escapeHtml(snippet);
+  }
+  
+  const before = escapeHtml(snippet.substring(0, start));
+  const highlighted = escapeHtml(snippet.substring(start, end));
+  const after = escapeHtml(snippet.substring(end));
+  
+  return before + '<mark>' + highlighted + '</mark>' + after;
+}
+
+// ============================================
 // INIT
 // ============================================
 
@@ -2816,69 +3355,126 @@ document.addEventListener('DOMContentLoaded', () => {
   initSwipeGestures();
   initScrollBasedUI();
   initSearchModal();
+  initPanelSelector();
 });
 `;
 
 function layout(title: string, content: string, options: { vaultName?: string; currentSlug?: string; backlinks?: PageInfo[]; frontmatter?: Record<string, any>; lastModified?: Date } = {}): string {
   const { vaultName = 'Wiki', currentSlug = '', backlinks = [], frontmatter = {}, lastModified } = options;
   
-  const backlinksHtml = backlinks.length > 0
-    ? `<ul class="backlinks-list">
-        ${backlinks.map(bl => `<li><a href="/${bl.slug}">${escapeHtml(bl.title)}</a></li>`).join('')}
-       </ul>`
-    : '<p class="widget-empty">No pages link here</p>';
+  // Build condensed properties infographic
+  const infographicItems: string[] = [];
+  const expandedItems: Array<{ key: string; value: string }> = [];
+  let tagsHtml = '';
   
-  // Build properties widget
-  const propertyEntries: Array<{ key: string; value: string }> = [];
-  
-  // Add last modified if available
+  // Add last modified with icon
   if (lastModified) {
-    propertyEntries.push({ 
-      key: 'Modified', 
-      value: lastModified.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-    });
+    const dateStr = lastModified.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    infographicItems.push(`
+      <div class="prop-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        <span class="prop-value">${escapeHtml(dateStr)}</span>
+      </div>
+    `);
   }
   
-  // Process frontmatter
+  // Process frontmatter for infographic
   for (const [key, value] of Object.entries(frontmatter)) {
-    if (key === 'title' || key === 'aliases' || key === 'alias') continue; // Skip these
+    if (key === 'title' || key === 'aliases' || key === 'alias') continue;
     
-    let displayValue = '';
+    const displayKey = key.charAt(0).toUpperCase() + key.slice(1);
     
     if (key === 'tags' && Array.isArray(value)) {
-      displayValue = value.map(tag => `<span class="properties-tag">${escapeHtml(String(tag))}</span>`).join('');
-    } else if (Array.isArray(value)) {
-      displayValue = value.map(v => {
-        const str = String(v);
-        return str.includes('[[') ? renderWikiLinks(str) : escapeHtml(str);
-      }).join(', ');
-    } else if (typeof value === 'object' && value !== null) {
-      displayValue = escapeHtml(JSON.stringify(value));
-    } else if (typeof value === 'boolean') {
-      displayValue = value ? 'Yes' : 'No';
+      // Tags get special treatment - shown as pills
+      tagsHtml = `
+        <div class="prop-tags">
+          ${value.slice(0, 4).map(tag => `<span class="prop-tag">${escapeHtml(String(tag))}</span>`).join('')}
+          ${value.length > 4 ? `<span class="prop-tag">+${value.length - 4}</span>` : ''}
+        </div>
+      `;
+    } else if (key === 'status' || key === 'type' || key === 'category') {
+      // Show status/type inline with icon
+      const iconSvg = key === 'status' 
+        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'
+        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>';
+      
+      infographicItems.push(`
+        <div class="prop-item">
+          ${iconSvg}
+          <span class="prop-value">${escapeHtml(String(value))}</span>
+        </div>
+      `);
+    } else if (key === 'date' || key === 'created') {
+      // Date properties with calendar icon
+      const dateValue = value instanceof Date 
+        ? value.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        : String(value);
+      infographicItems.push(`
+        <div class="prop-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          <span class="prop-value">${escapeHtml(dateValue)}</span>
+        </div>
+      `);
     } else {
-      const stringValue = String(value);
-      // Check if the value contains wiki links and render them
-      displayValue = stringValue.includes('[[') 
-        ? renderWikiLinks(stringValue) 
-        : escapeHtml(stringValue);
+      // Other properties go to expanded section
+      let displayValue = '';
+      if (Array.isArray(value)) {
+        displayValue = value.map(v => {
+          const str = String(v);
+          return str.includes('[[') ? renderWikiLinks(str) : escapeHtml(str);
+        }).join(', ');
+      } else if (typeof value === 'object' && value !== null) {
+        displayValue = escapeHtml(JSON.stringify(value));
+      } else if (typeof value === 'boolean') {
+        displayValue = value ? 'Yes' : 'No';
+      } else {
+        const stringValue = String(value);
+        displayValue = stringValue.includes('[[') 
+          ? renderWikiLinks(stringValue) 
+          : escapeHtml(stringValue);
+      }
+      expandedItems.push({ key: displayKey, value: displayValue });
     }
-    
-    // Capitalize first letter of key
-    const displayKey = key.charAt(0).toUpperCase() + key.slice(1);
-    propertyEntries.push({ key: displayKey, value: displayValue });
   }
   
-  const propertiesHtml = propertyEntries.length > 0
-    ? `<table class="properties-table">
-        ${propertyEntries.map(({ key, value }) => `
-          <tr>
-            <td class="properties-key">${escapeHtml(key)}</td>
-            <td class="properties-value">${value}</td>
-          </tr>
-        `).join('')}
-       </table>`
-    : '<p class="widget-empty">No properties</p>';
+  // Build infographic HTML
+  const hasProperties = infographicItems.length > 0 || tagsHtml || expandedItems.length > 0;
+  const propertiesInfographicHtml = hasProperties
+    ? `
+      <div class="properties-row">
+        ${infographicItems.join('')}
+        ${tagsHtml}
+        ${expandedItems.length > 0 ? `
+          <button class="properties-expand-btn" onclick="document.getElementById('properties-infographic').classList.toggle('expanded')">
+            <span>${expandedItems.length} more</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+        ` : ''}
+      </div>
+      ${expandedItems.length > 0 ? `
+        <div class="properties-expanded">
+          ${expandedItems.map(({ key, value }) => `
+            <div class="properties-detail-row">
+              <span class="properties-detail-key">${escapeHtml(key)}</span>
+              <span class="properties-detail-value">${value}</span>
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
+    `
+    : '<span class="properties-empty">No properties</span>';
   
   return `<!DOCTYPE html>
 <html lang="en">
@@ -2970,42 +3566,87 @@ function layout(title: string, content: string, options: { vaultName?: string; c
       </div>
     </main>
     
-    <!-- Right Sidebar - Widgets -->
+    <!-- Right Sidebar - Redesigned Panel System -->
     <aside class="sidebar-right">
-      <!-- Properties Widget -->
-      <div class="widget">
-        <div class="widget-header">
-          <span class="widget-title">Properties</span>
+      <!-- Properties Infographic - Condensed Top Bar -->
+      <div class="properties-infographic" id="properties-infographic">
+        ${propertiesInfographicHtml}
+      </div>
+      
+      <!-- Panel Content Area - Scrollable -->
+      <div class="panel-content-area">
+        <!-- Outline Panel (Default) -->
+        <div class="panel active" id="outline-panel" data-panel="outline">
+          <div id="toc-content">
+            <p class="panel-empty">Loading outline...</p>
+          </div>
         </div>
-        <div class="widget-content">
-          ${propertiesHtml}
+        
+        <!-- Outlinks Panel -->
+        <div class="panel" id="outlinks-panel" data-panel="outlinks">
+          <div id="outlinks-content">
+            <p class="panel-empty">Loading links...</p>
+          </div>
+        </div>
+        
+        <!-- Backlinks Panel -->
+        <div class="panel" id="backlinks-panel" data-panel="backlinks">
+          <div id="backlinks-content">
+            <p class="panel-empty">Loading backlinks...</p>
+          </div>
         </div>
       </div>
       
-      <!-- On This Page Widget -->
-      <div class="widget">
-        <div class="widget-header">
-          <span class="widget-title">On This Page</span>
-          <span class="widget-count" id="toc-count"></span>
+      <!-- Panel Selector Dropdown - Fixed Bottom -->
+      <div class="panel-selector-container">
+        <div class="panel-selector">
+          <div class="panel-selector-dropdown" id="panel-dropdown">
+            <div class="panel-selector-option active" data-panel="outline">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="8" y1="6" x2="21" y2="6"/>
+                <line x1="8" y1="12" x2="21" y2="12"/>
+                <line x1="8" y1="18" x2="21" y2="18"/>
+                <line x1="3" y1="6" x2="3.01" y2="6"/>
+                <line x1="3" y1="12" x2="3.01" y2="12"/>
+                <line x1="3" y1="18" x2="3.01" y2="18"/>
+              </svg>
+              Outline
+            </div>
+            <div class="panel-selector-option" data-panel="outlinks">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+              Outlinks <span id="outlinks-count" style="opacity:0.6;margin-left:auto;font-size:0.75em;"></span>
+            </div>
+            <div class="panel-selector-option" data-panel="backlinks">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 17H7A5 5 0 0 1 7 7h2"/>
+                <path d="M15 7h2a5 5 0 1 1 0 10h-2"/>
+                <line x1="8" y1="12" x2="16" y2="12"/>
+              </svg>
+              Backlinks <span id="backlinks-count" style="opacity:0.6;margin-left:auto;font-size:0.75em;">${backlinks.length || ''}</span>
+            </div>
+          </div>
+          <button class="panel-selector-btn" id="panel-selector-btn">
+            <span class="panel-selector-label" id="panel-selector-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="8" y1="6" x2="21" y2="6"/>
+                <line x1="8" y1="12" x2="21" y2="12"/>
+                <line x1="8" y1="18" x2="21" y2="18"/>
+                <line x1="3" y1="6" x2="3.01" y2="6"/>
+                <line x1="3" y1="12" x2="3.01" y2="12"/>
+                <line x1="3" y1="18" x2="3.01" y2="18"/>
+              </svg>
+              Outline
+            </span>
+            <svg class="panel-selector-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="18 15 12 9 6 15"/>
+            </svg>
+          </button>
         </div>
-        <div class="widget-content" id="toc-content">
-          <p class="widget-empty">Loading...</p>
-        </div>
-      </div>
-      
-      <!-- Backlinks Widget -->
-      <div class="widget">
-        <div class="widget-header">
-          <span class="widget-title">Backlinks</span>
-          <span class="widget-count">${backlinks.length || ''}</span>
-        </div>
-        <div class="widget-content">
-          ${backlinksHtml}
-        </div>
-      </div>
-      
-      <div class="theme-toggle-container">
-        <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">
+        <button id="theme-toggle" class="theme-toggle-inline" onclick="toggleTheme()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
           <span>Light mode</span>
         </button>

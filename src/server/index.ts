@@ -11,6 +11,7 @@ import { graphRoutes } from './routes/graph.js';
 import { treeRoutes } from './routes/tree.js';
 import { previewRoutes } from './routes/preview.js';
 import { staticRoutes } from './routes/static.js';
+import { backlinksRoutes } from './routes/backlinks.js';
 import chalk from 'chalk';
 
 export interface ServerContext {
@@ -49,6 +50,7 @@ export async function startServer(vaultPath: string, port: number): Promise<void
   app.route('/api/graph', graphRoutes);
   app.route('/api/tree', treeRoutes);
   app.route('/api/preview', previewRoutes);
+  app.route('/api/backlinks', backlinksRoutes);
   
   // Wiki routes (must be last - catches all paths)
   app.route('/', wikiRoutes);

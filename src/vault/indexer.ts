@@ -411,6 +411,176 @@ export class VaultIndex {
   }
   
   /**
+   * Get backlinks with context snippets showing where the link appears
+   */
+  getBacklinksWithSnippets(slug: string): Array<{
+    page: PageInfo;
+    mentions: Array<{
+      snippet: string;
+      highlightStart: number;
+      highlightEnd: number;
+      section?: string;
+    }>;
+  }> {
+    const backlinkSlugs = this.backlinks.get(slug);
+    if (!backlinkSlugs) return [];
+    
+    // Get the target page to find all possible link texts
+    const targetPage = this.pages.get(slug);
+    if (!targetPage) return [];
+    
+    // Build list of possible link texts (title, filename, aliases)
+    const possibleLinkTexts = new Set<string>();
+    possibleLinkTexts.add(targetPage.title.toLowerCase());
+    
+    // Add filename without extension
+    const filename = targetPage.relativePath.split('/').pop()?.replace('.md', '') || '';
+    possibleLinkTexts.add(filename.toLowerCase());
+    
+    // Add aliases
+    for (const alias of targetPage.aliases) {
+      possibleLinkTexts.add(alias.toLowerCase());
+    }
+    
+    const results: Array<{
+      page: PageInfo;
+      mentions: Array<{
+        snippet: string;
+        highlightStart: number;
+        highlightEnd: number;
+        section?: string;
+      }>;
+    }> = [];
+    
+    for (const backlinkSlug of backlinkSlugs) {
+      const backlinkPage = this.pages.get(backlinkSlug);
+      if (!backlinkPage) continue;
+      
+      const content = this.pageContent.get(backlinkSlug) || '';
+      const mentions = this.extractLinkMentions(content, possibleLinkTexts);
+      
+      if (mentions.length > 0) {
+        results.push({
+          page: backlinkPage,
+          mentions,
+        });
+      }
+    }
+    
+    // Sort by page title
+    results.sort((a, b) => a.page.title.localeCompare(b.page.title));
+    
+    return results;
+  }
+  
+  /**
+   * Extract all mentions of wiki links to a target page with context
+   */
+  private extractLinkMentions(
+    content: string,
+    targetLinkTexts: Set<string>
+  ): Array<{
+    snippet: string;
+    highlightStart: number;
+    highlightEnd: number;
+    section?: string;
+  }> {
+    const mentions: Array<{
+      snippet: string;
+      highlightStart: number;
+      highlightEnd: number;
+      section?: string;
+    }> = [];
+    
+    // Find all wiki links in content
+    const wikiLinkRegex = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
+    let match;
+    
+    // Track current section for context
+    let currentSection = '';
+    const lines = content.split('\n');
+    let charIndex = 0;
+    const lineStarts: number[] = [];
+    
+    for (const line of lines) {
+      lineStarts.push(charIndex);
+      // Check if this line is a heading
+      const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
+      if (headingMatch) {
+        currentSection = headingMatch[2].trim();
+      }
+      charIndex += line.length + 1; // +1 for newline
+    }
+    
+    while ((match = wikiLinkRegex.exec(content)) !== null) {
+      const linkText = match[1].trim().toLowerCase();
+      
+      // Check if this link points to our target
+      if (targetLinkTexts.has(linkText)) {
+        const matchStart = match.index;
+        const matchEnd = match.index + match[0].length;
+        
+        // Find which section this is in
+        let section = '';
+        let currentLineIndex = 0;
+        for (let i = 0; i < lineStarts.length; i++) {
+          if (lineStarts[i] <= matchStart) {
+            currentLineIndex = i;
+          } else {
+            break;
+          }
+        }
+        
+        // Look backwards for the most recent heading
+        for (let i = currentLineIndex; i >= 0; i--) {
+          const line = lines[i];
+          const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
+          if (headingMatch) {
+            section = headingMatch[2].trim();
+            break;
+          }
+        }
+        
+        // Generate snippet with context
+        const contextChars = 80;
+        const snippetStart = Math.max(0, matchStart - contextChars);
+        const snippetEnd = Math.min(content.length, matchEnd + contextChars);
+        
+        let snippet = content.substring(snippetStart, snippetEnd);
+        
+        // Calculate highlight position within snippet
+        const highlightStart = matchStart - snippetStart;
+        const highlightEnd = highlightStart + match[0].length;
+        
+        // Clean up the snippet
+        snippet = snippet.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+        
+        // Add ellipsis if truncated
+        let adjustedHighlightStart = highlightStart;
+        let adjustedHighlightEnd = highlightEnd;
+        
+        if (snippetStart > 0) {
+          snippet = '...' + snippet;
+          adjustedHighlightStart += 3;
+          adjustedHighlightEnd += 3;
+        }
+        if (snippetEnd < content.length) {
+          snippet = snippet + '...';
+        }
+        
+        mentions.push({
+          snippet,
+          highlightStart: adjustedHighlightStart,
+          highlightEnd: adjustedHighlightEnd,
+          section: section || undefined,
+        });
+      }
+    }
+    
+    return mentions;
+  }
+  
+  /**
    * Initialize Fuse.js for fuzzy search
    */
   private initializeFuse(): void {
