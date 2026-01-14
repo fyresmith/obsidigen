@@ -54,7 +54,7 @@ const styles = `
   
   /* Mobile-specific variables */
   --floating-btn-size: 48px;
-  --floating-offset: 16px;
+  --floating-offset: 10px;
   --search-bar-height: 52px;
   --modal-backdrop: rgba(0, 0, 0, 0.8);
   
@@ -1439,12 +1439,33 @@ body {
   .content-area::before {
     content: '';
     position: absolute;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
     background: rgba(0, 0, 0, 0.5);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s ease;
     z-index: 100;
+    transform: translateX(0);
+  }
+
+  /* Make overlay cover viewport even when scrolled */
+  .mobile-carousel .content-area {
+    position: relative;
+  }
+  
+  .content-area.dimmed::before {
+    position: fixed;
+    top: 0;
+    left: 83.33vw; /* Position it at the middle panel */
+    right: auto;
+    bottom: 0;
+    width: 100vw;
   }
   
   .content-area.dimmed::before {
@@ -1922,56 +1943,10 @@ body {
   }
 }
 
-/* Panel Indicators */
-.panel-indicators {
-  display: none;
-  position: fixed;
-  bottom: calc(var(--search-bar-height) + var(--floating-offset) + 0.5rem + var(--safe-area-bottom));
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1001;
-  gap: 0.5rem;
-  align-items: center;
-  padding: 0.5rem 0.75rem;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  box-shadow: 0 2px 8px var(--shadow);
-  transition: all 0.3s ease;
-}
-
-.panel-indicators.hidden {
-  opacity: 0;
-  pointer-events: none;
-  transform: translateX(-50%) translateY(10px);
-}
-
-.panel-indicators.faded {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.panel-indicator {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--text-muted);
-  opacity: 0.3;
-  transition: all 0.3s ease;
-}
-
-.panel-indicator.active {
-  width: 24px;
-  border-radius: 4px;
-  background: var(--accent);
-  opacity: 1;
-}
-
 /* Show floating controls on mobile */
 @media (max-width: 768px) {
   .floating-nav-btn,
-  .floating-search-bar,
-  .panel-indicators {
+  .floating-search-bar {
     display: flex;
   }
 }
@@ -2314,7 +2289,6 @@ function updateThemeColor(panelIndex = 1) {
 
 let currentPanel = 1; // 0 = left nav, 1 = content (default), 2 = right widgets
 let carousel = null;
-let panelIndicators = [];
 let contentArea = null;
 let justSwiped = false; // Flag to prevent phantom clicks after swipes
 
@@ -2326,8 +2300,6 @@ function initMobile() {
   const leftBtn = document.getElementById('floating-left-btn');
   const rightBtn = document.getElementById('floating-right-btn');
   const floatingSearch = document.querySelector('.floating-search-bar');
-  const panelIndicatorsEl = document.querySelector('.panel-indicators');
-  panelIndicators = Array.from(document.querySelectorAll('.panel-indicator'));
   
   // Initialize - show center panel (content)
   goToPanel(1, false);
@@ -2394,11 +2366,6 @@ function goToPanel(panelIndex, animate = true) {
   
   carousel.style.transform = \`translateX(\${offset}vw)\`;
   
-  // Update indicators
-  panelIndicators.forEach((indicator, index) => {
-    indicator.classList.toggle('active', index === panelIndex);
-  });
-  
   // Dim content area when on side panels
   if (panelIndex === 0 || panelIndex === 2) {
     contentArea.classList.add('dimmed');
@@ -2406,19 +2373,16 @@ function goToPanel(panelIndex, animate = true) {
     contentArea.classList.remove('dimmed');
   }
   
-  // Fade floating buttons and indicators on side panels
+  // Fade floating buttons on side panels
   const floatingButtons = document.querySelectorAll('.floating-nav-btn');
   const floatingSearch = document.querySelector('.floating-search-bar');
-  const panelIndicatorsEl = document.querySelector('.panel-indicators');
   
   if (panelIndex === 0 || panelIndex === 2) {
     floatingButtons.forEach(btn => btn.classList.add('faded'));
     floatingSearch?.classList.add('faded');
-    panelIndicatorsEl?.classList.add('faded');
   } else {
     floatingButtons.forEach(btn => btn.classList.remove('faded'));
     floatingSearch?.classList.remove('faded');
-    panelIndicatorsEl?.classList.remove('faded');
   }
   
   // Update iOS Safari status bar color to match current panel
@@ -2598,7 +2562,6 @@ function initScrollBasedUI() {
   const contentArea = document.querySelector('.content-area');
   const floatingButtons = document.querySelectorAll('.floating-nav-btn');
   const floatingSearch = document.querySelector('.floating-search-bar');
-  const panelIndicatorsEl = document.querySelector('.panel-indicators');
   
   if (!contentArea) return;
   
@@ -2615,13 +2578,11 @@ function initScrollBasedUI() {
         if (scrollTop > lastScrollTop + threshold && scrollTop > 100) {
           floatingButtons.forEach(btn => btn.classList.add('hidden'));
           floatingSearch?.classList.add('hidden');
-          panelIndicatorsEl?.classList.add('hidden');
         }
         // Scrolling up - show UI
         else if (scrollTop < lastScrollTop - threshold || scrollTop < 100) {
           floatingButtons.forEach(btn => btn.classList.remove('hidden'));
           floatingSearch?.classList.remove('hidden');
-          panelIndicatorsEl?.classList.remove('hidden');
         }
         
         lastScrollTop = scrollTop;
@@ -3035,13 +2996,31 @@ function initTOC() {
   tocLinks.forEach(link => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
+      
       const targetId = link.getAttribute('href')?.slice(1);
       const target = document.getElementById(targetId || '');
-      if (target) {
-        const contentRect = contentArea.getBoundingClientRect();
-        const targetRect = target.getBoundingClientRect();
-        const scrollTop = contentArea.scrollTop + (targetRect.top - contentRect.top) - 80;
-        contentArea.scrollTo({ top: scrollTop, behavior: 'smooth' });
+      
+      // On mobile, slide back to main panel when clicking outline link
+      if (carousel && currentPanel === 2) {
+        goToPanel(1);
+        
+        // Wait for panel transition to complete before scrolling
+        if (target) {
+          setTimeout(() => {
+            const contentRect = contentArea.getBoundingClientRect();
+            const targetRect = target.getBoundingClientRect();
+            const scrollTop = contentArea.scrollTop + (targetRect.top - contentRect.top) - 80;
+            contentArea.scrollTo({ top: scrollTop, behavior: 'smooth' });
+          }, 350); // Match the carousel transition duration
+        }
+      } else {
+        // Not on mobile or not transitioning panels, scroll immediately
+        if (target) {
+          const contentRect = contentArea.getBoundingClientRect();
+          const targetRect = target.getBoundingClientRect();
+          const scrollTop = contentArea.scrollTop + (targetRect.top - contentRect.top) - 80;
+          contentArea.scrollTo({ top: scrollTop, behavior: 'smooth' });
+        }
       }
     });
   });
@@ -3646,13 +3625,6 @@ function layout(title: string, content: string, options: { vaultName?: string; c
   
   <!-- Sidebar Overlay -->
   <div id="sidebar-overlay" class="sidebar-overlay"></div>
-  
-  <!-- Panel Indicators (Mobile) -->
-  <div class="panel-indicators">
-    <div class="panel-indicator"></div>
-    <div class="panel-indicator active"></div>
-    <div class="panel-indicator"></div>
-  </div>
   
   <!-- Mobile Carousel Wrapper -->
   <div class="mobile-carousel-wrapper">
