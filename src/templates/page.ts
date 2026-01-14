@@ -89,9 +89,9 @@ const styles = `
   --text-4xl: 2.25rem;
   
   /* Mobile-specific variables */
-  --floating-btn-size: 48px;
-  --floating-offset: 10px;
-  --search-bar-height: 52px;
+  --floating-btn-size: 40px;
+  --floating-offset: 12px;
+  --search-bar-height: 46px;
   --modal-backdrop: rgba(0, 0, 0, 0.8);
   
   /* Safe area insets for mobile browsers */
@@ -1909,28 +1909,30 @@ body {
   width: var(--floating-btn-size);
   height: var(--floating-btn-size);
   border-radius: 50%;
-  background: var(--bg-secondary);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 2px solid var(--border);
-  color: var(--text-primary);
+  background: rgba(26, 26, 26, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid var(--border-subtle);
+  color: var(--text-secondary);
   cursor: pointer;
   z-index: 1000;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 16px var(--shadow), 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all var(--transition-base) ease;
+  opacity: 0.9;
 }
 
 .floating-nav-btn:active {
-  transform: scale(0.95);
-  background: var(--bg-tertiary);
-  border-color: var(--accent);
+  transform: scale(0.92);
+  background: rgba(37, 37, 37, 0.9);
+  border-color: var(--border);
+  opacity: 1;
 }
 
 .floating-nav-btn svg {
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
 }
 
 .floating-nav-btn.hidden {
@@ -1961,23 +1963,25 @@ body {
   left: var(--floating-offset);
   right: var(--floating-offset);
   height: var(--search-bar-height);
-  background: var(--bg-secondary);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 2px solid var(--border);
-  border-radius: 26px;
+  background: rgba(26, 26, 26, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 23px;
   z-index: 1000;
   align-items: center;
-  padding: 0 1.25rem;
-  gap: 0.75rem;
+  padding: 0 1rem;
+  gap: 0.65rem;
   cursor: pointer;
-  box-shadow: 0 4px 16px var(--shadow), 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all var(--transition-base) ease;
+  opacity: 0.9;
 }
 
 .floating-search-bar:active {
-  background: var(--bg-tertiary);
-  border-color: var(--accent);
+  background: rgba(37, 37, 37, 0.9);
+  border-color: var(--border);
+  opacity: 1;
 }
 
 .floating-search-bar.hidden {
@@ -1992,16 +1996,48 @@ body {
 }
 
 .floating-search-bar svg {
-  width: 20px;
-  height: 20px;
-  color: var(--text-secondary);
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
   flex-shrink: 0;
 }
 
 .floating-search-bar .search-placeholder {
-  color: var(--text-secondary);
-  font-size: 0.95rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
   flex: 1;
+}
+
+/* Light mode overrides for floating buttons */
+[data-theme="light"] .floating-nav-btn {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(224, 224, 224, 0.8);
+  color: var(--text-secondary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .floating-nav-btn:active {
+  background: rgba(248, 248, 248, 0.95);
+  border-color: var(--border);
+}
+
+[data-theme="light"] .floating-search-bar {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(224, 224, 224, 0.8);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .floating-search-bar:active {
+  background: rgba(248, 248, 248, 0.95);
+  border-color: var(--border);
+}
+
+[data-theme="light"] .floating-search-bar svg {
+  color: var(--text-muted);
+}
+
+[data-theme="light"] .floating-search-bar .search-placeholder {
+  color: var(--text-muted);
 }
 
 /* Search Modal - Command Palette Style */
