@@ -389,8 +389,9 @@ body {
   width: 14px;
   height: 14px;
   flex-shrink: 0;
-  transition: transform 0.08s;
+  transition: transform 0.1s ease;
   opacity: 0.65;
+  will-change: transform;
 }
 
 .tree-chevron.expanded {
@@ -2548,6 +2549,10 @@ function initSearch() {
       return;
     }
     
+    // Show dropdown immediately with loading state
+    searchResults.innerHTML = '<div class="search-result-item"><div class="search-result-title" style="color: var(--text-muted);">Searching...</div></div>';
+    searchResults.classList.add('active');
+    
     debounceTimer = setTimeout(async () => {
       try {
         const res = await fetch('/api/search?q=' + encodeURIComponent(query));
@@ -2560,15 +2565,14 @@ function initSearch() {
               <div class="search-result-path">\${escapeHtml(r.path)}</div>
             </a>
           \`).join('');
-          searchResults.classList.add('active');
         } else {
           searchResults.innerHTML = '<div class="search-result-item"><div class="search-result-title">No results found</div></div>';
-          searchResults.classList.add('active');
         }
       } catch (err) {
         console.error('Search error:', err);
+        searchResults.innerHTML = '<div class="search-result-item"><div class="search-result-title" style="color: var(--link-missing);">Search error</div></div>';
       }
-    }, 150);
+    }, 100);
   });
 
   searchInput.addEventListener('blur', () => {
@@ -3083,7 +3087,7 @@ async function handleSearchInput(e) {
     return;
   }
   
-  // Show loading state
+  // Show loading state immediately
   showSearchLoading();
   
   searchDebounceTimer = setTimeout(async () => {
@@ -3100,7 +3104,7 @@ async function handleSearchInput(e) {
       console.error('Search error:', err);
       showSearchError();
     }
-  }, 200);
+  }, 100);
 }
 
 function showSearchLoading() {
