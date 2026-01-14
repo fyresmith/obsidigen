@@ -10,7 +10,31 @@ type Variables = {
 
 export const backlinksRoutes = new Hono<{ Variables: Variables }>();
 
-// Get backlinks with context snippets for a page
+// Get outlinks (forward links) for a page - MUST come before the catch-all route
+backlinksRoutes.get('/outlinks/:slug{.*}', async (c) => {
+  const vaultIndex = c.get('vaultIndex');
+  const slug = c.req.param('slug');
+  
+  if (!slug) {
+    return c.json({ error: 'Slug is required' }, 400);
+  }
+  
+  // Get all outlinks including those to non-existent pages
+  const outlinks = vaultIndex.getAllOutlinks(slug);
+  
+  return c.json({
+    slug,
+    outlinks: outlinks.map(link => ({
+      title: link.title,
+      slug: link.slug,
+      path: link.path,
+      folder: link.folder,
+      exists: link.exists,
+    })),
+  });
+});
+
+// Get backlinks with context snippets for a page (catch-all route)
 backlinksRoutes.get('/:slug{.*}', async (c) => {
   const vaultIndex = c.get('vaultIndex');
   const slug = c.req.param('slug');
@@ -39,31 +63,6 @@ backlinksRoutes.get('/:slug{.*}', async (c) => {
         lastModified: bl.page.lastModified,
       },
       mentions: bl.mentions,
-    })),
-  });
-});
-
-// Get outlinks (forward links) for a page
-backlinksRoutes.get('/outlinks/:slug{.*}', async (c) => {
-  const vaultIndex = c.get('vaultIndex');
-  const slug = c.req.param('slug');
-  
-  if (!slug) {
-    return c.json({ error: 'Slug is required' }, 400);
-  }
-  
-  const outlinks = vaultIndex.getForwardLinks(slug);
-  
-  return c.json({
-    slug,
-    outlinks: outlinks.map(page => ({
-      title: page.title,
-      slug: page.slug,
-      path: page.relativePath,
-      folder: page.relativePath.includes('/') 
-        ? page.relativePath.split('/').slice(0, -1).join('/') 
-        : 'Root',
-      lastModified: page.lastModified,
     })),
   });
 });

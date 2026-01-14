@@ -399,7 +399,7 @@ export class VaultIndex {
   }
   
   /**
-   * Get forward links for a page
+   * Get forward links for a page (only existing pages)
    */
   getForwardLinks(slug: string): PageInfo[] {
     const links = this.forwardLinks.get(slug);
@@ -408,6 +408,78 @@ export class VaultIndex {
     return Array.from(links)
       .map(s => this.pages.get(s))
       .filter((p): p is PageInfo => p !== undefined);
+  }
+  
+  /**
+   * Get all outlinks from a page, including links to non-existent pages
+   */
+  getAllOutlinks(slug: string): Array<{
+    title: string;
+    slug: string | null;
+    path: string;
+    folder: string;
+    exists: boolean;
+  }> {
+    const content = this.pageContent.get(slug);
+    if (!content) return [];
+    
+    // Extract all wiki links from content
+    const wikiLinkRegex = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
+    const seenLinks = new Set<string>();
+    const outlinks: Array<{
+      title: string;
+      slug: string | null;
+      path: string;
+      folder: string;
+      exists: boolean;
+    }> = [];
+    
+    let match;
+    while ((match = wikiLinkRegex.exec(content)) !== null) {
+      const linkTarget = match[1].trim();
+      const displayText = match[2]?.trim();
+      
+      // Skip if we've already processed this link text
+      const normalizedLink = linkTarget.toLowerCase();
+      if (seenLinks.has(normalizedLink)) continue;
+      seenLinks.add(normalizedLink);
+      
+      // Try to resolve the link to an existing page
+      const targetSlug = this.getSlug(linkTarget);
+      const targetPage = targetSlug ? this.pages.get(targetSlug) : null;
+      
+      if (targetPage) {
+        // Link to existing page
+        const folder = targetPage.relativePath.includes('/') 
+          ? targetPage.relativePath.split('/').slice(0, -1).join('/') 
+          : 'Root';
+        
+        outlinks.push({
+          title: targetPage.title,
+          slug: targetPage.slug,
+          path: targetPage.relativePath,
+          folder,
+          exists: true,
+        });
+      } else {
+        // Link to non-existent page
+        outlinks.push({
+          title: displayText || linkTarget,
+          slug: null,
+          path: linkTarget,
+          folder: 'Not found',
+          exists: false,
+        });
+      }
+    }
+    
+    // Sort: existing pages first, then by title
+    outlinks.sort((a, b) => {
+      if (a.exists !== b.exists) return a.exists ? -1 : 1;
+      return a.title.localeCompare(b.title);
+    });
+    
+    return outlinks;
   }
   
   /**

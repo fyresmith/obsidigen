@@ -877,6 +877,26 @@ body {
   opacity: 0.6;
 }
 
+/* Missing outlink styles */
+.outlink-card.outlink-missing {
+  opacity: 0.7;
+  border-style: dashed;
+  cursor: default;
+}
+
+.outlink-card.outlink-missing .outlink-title {
+  color: var(--link-missing);
+  font-style: italic;
+}
+
+.outlink-path-missing {
+  color: var(--link-missing);
+}
+
+.outlink-path-missing svg {
+  opacity: 0.8;
+}
+
 /* ============================================
    BACKLINKS PANEL - Search-like UI
    ============================================ */
@@ -3242,19 +3262,39 @@ async function loadOutlinks() {
     if (data.outlinks && data.outlinks.length > 0) {
       container.innerHTML = \`
         <ul class="outlinks-list">
-          \${data.outlinks.map(link => \`
-            <li class="outlink-item">
-              <a href="/\${link.slug}" class="outlink-card">
-                <div class="outlink-title">\${escapeHtml(link.title)}</div>
-                <div class="outlink-path">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                  </svg>
-                  \${escapeHtml(link.folder)}
-                </div>
-              </a>
-            </li>
-          \`).join('')}
+          \${data.outlinks.map(link => {
+            if (link.exists) {
+              return \`
+                <li class="outlink-item">
+                  <a href="/\${link.slug}" class="outlink-card">
+                    <div class="outlink-title">\${escapeHtml(link.title)}</div>
+                    <div class="outlink-path">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                      </svg>
+                      \${escapeHtml(link.folder)}
+                    </div>
+                  </a>
+                </li>
+              \`;
+            } else {
+              return \`
+                <li class="outlink-item">
+                  <div class="outlink-card outlink-missing">
+                    <div class="outlink-title">\${escapeHtml(link.title)}</div>
+                    <div class="outlink-path outlink-path-missing">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="8" x2="12" y2="12"/>
+                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                      </svg>
+                      Page not found
+                    </div>
+                  </div>
+                </li>
+              \`;
+            }
+          }).join('')}
         </ul>
       \`;
       if (countEl) countEl.textContent = data.outlinks.length.toString();
