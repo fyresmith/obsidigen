@@ -2,15 +2,24 @@
 
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
+import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
 import remarkRehype from 'remark-rehype';
 import rehypeStringify from 'rehype-stringify';
+import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
+import rehypeHighlight from 'rehype-highlight';
 import { visit } from 'unist-util-visit';
+import { readFileSync } from 'fs';
+import matter from 'gray-matter';
 import type { Root, Text, Parent } from 'mdast';
 import type { VaultIndex } from './indexer.js';
 
 // Wiki link regex: [[Page Name]] or [[Page Name|Display Text]]
 const WIKI_LINK_REGEX = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
+
+// Embed regex: ![[Page Name]]
+const EMBED_REGEX = /!\[\[([^\]|]+)\]\]/g;
 
 // Highlight regex: ==text==
 const HIGHLIGHT_REGEX = /==([^=]+)==/g;
@@ -20,6 +29,10 @@ const CALLOUT_REGEX = /^\[!(\w+)\]\s*(.*)?$/;
 
 interface RemarkWikiLinksOptions {
   resolveLink: (linkText: string) => { href: string; exists: boolean };
+}
+
+interface RemarkEmbedsOptions {
+  resolveEmbed: (linkText: string) => Promise<{ html: string; exists: boolean }>;
 }
 
 /**
@@ -126,6 +139,88 @@ function remarkHighlights() {
 }
 
 /**
+ * Remark plugin to transform Obsidian embeds
+ */
+function remarkEmbeds(options: RemarkEmbedsOptions) {
+  return async (tree: Root) => {
+    const promises: Promise<void>[] = [];
+    
+    visit(tree, 'text', (node: Text, index: number | undefined, parent: Parent | undefined) => {
+      if (!parent || index === undefined) return;
+      
+      const text = node.value;
+      const matches = [...text.matchAll(EMBED_REGEX)];
+      
+      if (matches.length === 0) return;
+      
+      // Build new nodes by splitting text around embeds
+      const newNodes: any[] = [];
+      let lastIndex = 0;
+      
+      for (const match of matches) {
+        const [fullMatch, linkTarget] = match;
+        const matchIndex = match.index!;
+        
+        // Add text before the match
+        if (matchIndex > lastIndex) {
+          newNodes.push({
+            type: 'text',
+            value: text.slice(lastIndex, matchIndex),
+          });
+        }
+        
+        // Create placeholder for embed that will be resolved
+        const embedPromise = options.resolveEmbed(linkTarget).then(({ html, exists }) => {
+          const embedHtml = exists
+            ? `<div class="embed-container" data-embed="${escapeHtml(linkTarget)}">
+                <div class="embed-header">
+                  <span class="embed-icon">📄</span>
+                  <span class="embed-title">${escapeHtml(linkTarget)}</span>
+                </div>
+                <div class="embed-content">${html}</div>
+              </div>`
+            : `<div class="embed-container embed-missing" data-embed="${escapeHtml(linkTarget)}">
+                <div class="embed-header">
+                  <span class="embed-icon">❌</span>
+                  <span class="embed-title">${escapeHtml(linkTarget)}</span>
+                </div>
+                <div class="embed-content">Page not found</div>
+              </div>`;
+          
+          return {
+            type: 'html',
+            value: embedHtml,
+          };
+        });
+        
+        promises.push(
+          embedPromise.then(node => {
+            newNodes.push(node);
+          })
+        );
+        
+        lastIndex = matchIndex + fullMatch.length;
+      }
+      
+      // Add remaining text
+      if (lastIndex < text.length) {
+        newNodes.push({
+          type: 'text',
+          value: text.slice(lastIndex),
+        });
+      }
+      
+      // Wait for all embeds to resolve before replacing
+      Promise.all(promises).then(() => {
+        parent.children.splice(index, 1, ...newNodes);
+      });
+    });
+    
+    await Promise.all(promises);
+  };
+}
+
+/**
  * Remark plugin to transform Obsidian callouts
  */
 function remarkCallouts() {
@@ -224,13 +319,51 @@ export async function parseMarkdown(
     };
   };
   
+  const resolveEmbed = async (linkText: string): Promise<{ html: string; exists: boolean }> => {
+    // Normalize the link text
+    const normalized = linkText.trim();
+    
+    // Try to find in index
+    const slug = vaultIndex.getSlug(normalized);
+    if (!slug) {
+      return { html: '', exists: false };
+    }
+    
+    const page = vaultIndex.getPage(slug);
+    if (!page) {
+      return { html: '', exists: false };
+    }
+    
+    try {
+      // Read the file content
+      const fileContent = readFileSync(page.path, 'utf-8');
+      const { content: embeddedContent } = matter(fileContent);
+      
+      // Parse the embedded page content (but prevent recursive embeds to avoid infinite loops)
+      const contentWithoutEmbeds = embeddedContent.replace(EMBED_REGEX, '');
+      const result = await parseMarkdown(contentWithoutEmbeds, vaultIndex);
+      
+      return {
+        html: result.html,
+        exists: true,
+      };
+    } catch (error) {
+      return { html: '', exists: false };
+    }
+  };
+  
   const processor = unified()
     .use(remarkParse)
+    .use(remarkGfm) // GitHub Flavored Markdown (tables, task lists, strikethrough, footnotes)
+    .use(remarkMath) // Math support
     .use(remarkWikiLinks, { resolveLink })
     .use(remarkHighlights)
+    .use(remarkEmbeds, { resolveEmbed })
     .use(remarkCallouts)
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeRaw)
+    .use(rehypeKatex) // Render math with KaTeX
+    .use(rehypeHighlight) // Syntax highlighting
     .use(rehypeStringify);
   
   const result = await processor.process(content);
