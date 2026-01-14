@@ -267,7 +267,7 @@ body {
 .tree-list .tree-list {
   padding-left: 0.8rem;
   border-left: 1px solid var(--border-subtle);
-  margin-left: 0.6rem;
+  margin-left: 0.5rem;
 }
 
 .tree-item {
@@ -278,13 +278,13 @@ body {
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.15rem 0.6rem;
+  padding: 0.025rem 0.6rem;
   cursor: pointer;
   color: var(--text-secondary);
   font-size: 0.9rem;
   font-weight: 500;
   letter-spacing: 0;
-  transition: color 0.1s;
+  transition: color 0.05s;
 }
 
 .tree-folder-header:hover {
@@ -295,12 +295,12 @@ body {
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.1rem 0.6rem;
+  padding: 0.025rem 0.6rem;
   cursor: pointer;
   color: var(--text-secondary);
   text-decoration: none;
   font-size: 0.9rem;
-  transition: color 0.1s;
+  transition: color 0.05s;
   line-height: 1.5;
 }
 
@@ -322,11 +322,11 @@ body {
 }
 
 .tree-chevron {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   flex-shrink: 0;
-  transition: transform 0.15s;
-  opacity: 0.4;
+  transition: transform 0.08s;
+  opacity: 0.65;
 }
 
 .tree-chevron.expanded {
@@ -350,8 +350,8 @@ body {
 
 .tree-children {
   display: none;
-  padding-top: 0.1rem;
-  padding-bottom: 0.25rem;
+  padding-top: 0.025rem;
+  padding-bottom: 0.025rem;
 }
 
 .tree-children.expanded {
@@ -1094,10 +1094,15 @@ body {
   /* Enhanced touch targets for tree navigation */
   .tree-folder-header,
   .tree-page-link {
-    padding: 0.65rem;
+    padding: 0.5rem 0.65rem;
     min-height: 24px;
     font-size: 1rem;
     align-items: center;
+  }
+  
+  .tree-chevron {
+    width: 16px;
+    height: 16px;
   }
   
   .content-wrapper {
