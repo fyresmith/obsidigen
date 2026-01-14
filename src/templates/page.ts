@@ -1949,6 +1949,11 @@ body {
   .floating-search-bar {
     display: flex;
   }
+  
+  /* Hide preview cards on mobile */
+  .page-preview {
+    display: none !important;
+  }
 }
 
 /* ============================================
