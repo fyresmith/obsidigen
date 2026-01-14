@@ -42,6 +42,16 @@ export async function startServer(vaultPath: string, port: number): Promise<void
   // Static files (CSS, JS)
   app.use('/static/*', serveStatic({ root: './public' }));
   
+  // Health check endpoint for Docker and monitoring
+  app.get('/health', (c) => {
+    return c.json({ 
+      status: 'ok', 
+      uptime: process.uptime(),
+      pages: vaultIndex.pageCount,
+      timestamp: new Date().toISOString()
+    });
+  });
+  
   // Static routes (favicon, etc)
   app.route('/', staticRoutes);
   
@@ -93,10 +103,29 @@ export async function stopServer(): Promise<void> {
   }
 }
 
-// Support running as daemon
-if (process.env.OBSIDIGEN_VAULT_PATH && process.env.OBSIDIGEN_PORT) {
-  const vaultPath = process.env.OBSIDIGEN_VAULT_PATH;
-  const port = parseInt(process.env.OBSIDIGEN_PORT, 10);
+// Support running as daemon (using OBSIDIGEN_* env vars)
+// or in Docker (using standard VAULT_PATH and PORT env vars)
+const isDaemon = process.env.OBSIDIGEN_VAULT_PATH && process.env.OBSIDIGEN_PORT;
+const isDocker = process.env.DOCKER_CONTAINER === 'true' || 
+                 (!process.env.OBSIDIGEN_VAULT_PATH && process.env.VAULT_PATH);
+
+if (isDaemon) {
+  const vaultPath = process.env.OBSIDIGEN_VAULT_PATH!;
+  const port = parseInt(process.env.OBSIDIGEN_PORT!, 10);
+  
+  startServer(vaultPath, port).catch((error) => {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  });
+} else if (isDocker) {
+  // Docker mode: Use VAULT_PATH and PORT environment variables
+  const vaultPath = process.env.VAULT_PATH || '/vault';
+  const port = parseInt(process.env.PORT || '4000', 10);
+  
+  console.log(chalk.bold(`\n🐳 Starting Obsidigen in Docker mode...\n`));
+  console.log(`  Vault: ${chalk.gray(vaultPath)}`);
+  console.log(`  Port:  ${chalk.cyan(port.toString())}`);
+  console.log('');
   
   startServer(vaultPath, port).catch((error) => {
     console.error('Failed to start server:', error);

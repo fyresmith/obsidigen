@@ -2,16 +2,22 @@
 
 This document describes how to create a new release of Obsidigen.
 
+> **📖 For detailed deployment setup instructions, see [DEPLOYMENT.md](../DEPLOYMENT.md)**
+
 ## Prerequisites
 
 Before creating a release, ensure you have:
 
-1. **NPM Token** (optional, for publishing to npm)
+1. **NPM Token** (for publishing to npm)
    - Go to repository Settings → Secrets and variables → Actions
    - Add a new secret named `NPM_TOKEN`
    - Get your token from https://www.npmjs.com/settings/YOUR_USERNAME/tokens
 
-2. **GitHub Permissions**
+2. **Docker Hub Credentials** (for Docker image publishing)
+   - Add secrets: `DOCKER_USERNAME` and `DOCKER_TOKEN`
+   - See [DEPLOYMENT.md](../DEPLOYMENT.md) for detailed setup
+
+3. **GitHub Permissions**
    - The GitHub Actions workflows need write permissions for releases
    - This is configured in the workflow file already
 
@@ -36,6 +42,7 @@ Before creating a release, ensure you have:
    - Create release artifacts (.tar.gz and .zip)
    - Create a GitHub Release with the artifacts
    - Publish to npm (if NPM_TOKEN is configured)
+   - Build and push multi-arch Docker images (if Docker secrets configured)
 
 ### Method 2: Manual Workflow Dispatch
 
@@ -47,12 +54,23 @@ This builds the artifacts but does NOT create a release or publish to npm.
 
 ## Release Artifacts
 
-Each release includes:
+Each release publishes to multiple platforms:
 
+### GitHub Release Files
 - `obsidigen-vX.Y.Z-Linux-X64.tar.gz` - Linux binary
 - `obsidigen-vX.Y.Z-macOS-ARM64.tar.gz` - macOS Apple Silicon
 - `obsidigen-vX.Y.Z-macOS-X64.tar.gz` - macOS Intel
 - `obsidigen-vX.Y.Z-Windows-X64.zip` - Windows binary
+
+### npm Package
+- Published to: https://www.npmjs.com/package/obsidigen
+- Install: `npm install -g obsidigen`
+
+### Docker Images
+- Published to: https://hub.docker.com/r/calebmsmith/obsidigen
+- Tags: `latest`, `X.Y.Z`, `X.Y`, `X`
+- Architectures: `linux/amd64`, `linux/arm64`
+- Pull: `docker pull calebmsmith/obsidigen:latest`
 
 ## Version Naming Convention
 
@@ -73,6 +91,7 @@ Each release includes:
 - Builds for multiple platforms
 - Creates GitHub releases
 - Publishes to npm
+- Builds and pushes Docker images (multi-arch)
 
 ## Troubleshooting
 
@@ -80,6 +99,12 @@ Each release includes:
 - Check that `NPM_TOKEN` secret is set correctly
 - Verify you have permissions to publish the package
 - Check that the version isn't already published
+
+### Docker push fails
+- Verify `DOCKER_USERNAME` and `DOCKER_TOKEN` secrets are configured
+- Ensure Docker Hub repository exists
+- Check token permissions (needs Read, Write, Delete)
+- See [DEPLOYMENT.md](../DEPLOYMENT.md) for detailed troubleshooting
 
 ### Build fails on specific OS
 - Check the CI workflow runs for that OS

@@ -24,9 +24,11 @@ Render your Obsidian vaults as beautiful web wikis with Cloudflare Tunnel integr
 - **Theme Toggle** - Light/dark mode with localStorage persistence
 
 ### Deployment
+- **Docker Support** - Production-ready containerized deployment
 - **Cloudflare Tunnel** - Secure public access via tunnels
 - **Cloudflare Access** - Zero-trust authentication
 - **Boot Service** - Run as a system service (macOS & Linux)
+- **Multi-Platform** - Deploy to AWS, GCP, DigitalOcean, Fly.io, Railway, and more
 
 ## Installation
 
@@ -46,10 +48,33 @@ npm run build
 npm link
 ```
 
+### With Docker
+
+Perfect for production deployments and self-hosting:
+
+```bash
+# Pull from Docker Hub
+docker pull calebmsmith/obsidigen:latest
+
+# Run with your vault
+docker run -d \
+  -p 4000:4000 \
+  -v /path/to/your/vault:/vault:ro \
+  --name obsidigen \
+  calebmsmith/obsidigen:latest
+```
+
+Or use Docker Compose. See [DOCKER.md](DOCKER.md) for complete Docker documentation.
+
 ### Requirements
 
+**For npm/source installation:**
 - Node.js 18 or higher
 - npm or yarn
+
+**For Docker:**
+- Docker 20.10 or higher
+- Docker Compose (optional, for easier management)
 
 ## Quick Start
 
@@ -292,6 +317,269 @@ obsidigen tunnel start
 
 ```bash
 obsidigen access setup
+```
+
+## Docker Deployment
+
+Run Obsidigen in a Docker container for production deployments, VPS hosting, or cloud platforms.
+
+### Quick Start with Docker
+
+**1. Pull the image:**
+```bash
+docker pull calebmsmith/obsidigen:latest
+```
+
+**2. Run with your vault:**
+```bash
+docker run -d \
+  --name obsidigen \
+  -p 4000:4000 \
+  -v /path/to/your/vault:/vault:ro \
+  --restart unless-stopped \
+  calebmsmith/obsidigen:latest
+```
+
+**3. Visit:** `http://localhost:4000`
+
+### Docker Compose (Recommended)
+
+Create a `docker-compose.yml`:
+
+```yaml
+version: '3.8'
+
+services:
+  obsidigen:
+    image: calebmsmith/obsidigen:latest
+    container_name: obsidigen
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./your-vault:/vault:ro
+      - ./config:/app/.obsidigen
+    environment:
+      - PORT=4000
+```
+
+Then run:
+```bash
+docker compose up -d
+```
+
+### Volume Mounts
+
+| Path | Description | Required |
+|------|-------------|----------|
+| `/vault` | Your Obsidian vault directory | ✅ Yes |
+| `/app/.obsidigen` | Configuration persistence | Optional |
+
+**Important:** Mount your vault as read-only (`:ro`) for safety, unless you need Obsidigen to write to it.
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PORT` | Server port | `4000` |
+| `OBSIDIGEN_TITLE` | Custom wiki title | Vault name |
+| `NODE_ENV` | Node environment | `production` |
+
+### Docker Examples
+
+**Basic deployment:**
+```bash
+docker run -d \
+  -p 4000:4000 \
+  -v ~/my-vault:/vault:ro \
+  calebmsmith/obsidigen:latest
+```
+
+**With custom title and port:**
+```bash
+docker run -d \
+  -p 8080:8080 \
+  -e PORT=8080 \
+  -e OBSIDIGEN_TITLE="My Knowledge Base" \
+  -v ~/my-vault:/vault:ro \
+  calebmsmith/obsidigen:latest
+```
+
+**Multiple vaults:**
+```yaml
+version: '3.8'
+
+services:
+  wiki1:
+    image: calebmsmith/obsidigen:latest
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./vault1:/vault:ro
+  
+  wiki2:
+    image: calebmsmith/obsidigen:latest
+    ports:
+      - "4001:4000"
+    volumes:
+      - ./vault2:/vault:ro
+```
+
+### Platform-Specific Deployments
+
+#### DigitalOcean / VPS
+
+```bash
+# SSH into your server
+ssh user@your-server.com
+
+# Install Docker (if not installed)
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
+
+# Clone your vault or sync it
+git clone https://github.com/yourusername/your-vault.git
+
+# Run Obsidigen
+docker run -d \
+  --name obsidigen \
+  -p 80:4000 \
+  -v ~/your-vault:/vault:ro \
+  --restart always \
+  calebmsmith/obsidigen:latest
+```
+
+#### AWS ECS / Google Cloud Run
+
+Deploy directly using the image: `calebmsmith/obsidigen:latest`
+
+Mount your vault via:
+- **AWS ECS:** EFS volume mount
+- **Google Cloud Run:** Cloud Storage FUSE mount
+
+#### Fly.io
+
+Create `fly.toml`:
+```toml
+app = "my-obsidigen-wiki"
+primary_region = "sjc"
+
+[build]
+  image = "calebmsmith/obsidigen:latest"
+
+[[services]]
+  http_checks = []
+  internal_port = 4000
+  protocol = "tcp"
+
+  [[services.ports]]
+    force_https = true
+    handlers = ["http"]
+    port = 80
+
+  [[services.ports]]
+    handlers = ["tls", "http"]
+    port = 443
+
+[[mounts]]
+  source = "obsidigen_vault"
+  destination = "/vault"
+```
+
+Deploy:
+```bash
+fly volumes create obsidigen_vault --size 1
+fly deploy
+```
+
+#### Railway / Render
+
+1. Connect your GitHub repository
+2. Set Docker image: `calebmsmith/obsidigen:latest`
+3. Add volume mount for `/vault`
+4. Set port: `4000`
+5. Deploy!
+
+### Building Locally
+
+To build your own image:
+
+```bash
+# Clone the repository
+git clone https://github.com/fyresmith/obsidigen.git
+cd obsidigen
+
+# Build the image
+docker build -t obsidigen:local .
+
+# Run your custom build
+docker run -d \
+  -p 4000:4000 \
+  -v ~/my-vault:/vault:ro \
+  obsidigen:local
+```
+
+### Health Checks
+
+The Docker image includes automatic health checks:
+- Endpoint: `http://localhost:4000/health`
+- Interval: 30 seconds
+- Timeout: 3 seconds
+- Retries: 3
+
+Monitor with:
+```bash
+docker ps  # Shows health status
+docker inspect obsidigen | grep Health  # Detailed health info
+```
+
+### Troubleshooting
+
+**Container won't start:**
+```bash
+# Check logs
+docker logs obsidigen
+
+# Common issues:
+# - Vault path doesn't exist
+# - Port already in use
+# - Insufficient permissions
+```
+
+**File changes not reflecting:**
+```bash
+# Ensure live reload is working
+docker logs obsidigen | grep "Watching"
+
+# If using network mounts (NFS, etc.), file watching might not work
+# Consider using polling mode (future feature)
+```
+
+**Performance issues:**
+```bash
+# Increase memory limit
+docker run -d \
+  --memory="1g" \
+  --cpus="1.5" \
+  -p 4000:4000 \
+  -v ~/vault:/vault:ro \
+  calebmsmith/obsidigen:latest
+```
+
+### Security Best Practices
+
+1. **Read-only vaults:** Always mount as `:ro` unless write access is needed
+2. **Non-root user:** The image runs as non-root user `nodejs` (UID 1001)
+3. **Network isolation:** Use Docker networks for multi-container setups
+4. **Secrets:** Use Docker secrets or environment variables for sensitive config
+5. **Updates:** Regularly pull latest image for security patches
+
+```bash
+# Update to latest version
+docker pull calebmsmith/obsidigen:latest
+docker stop obsidigen
+docker rm obsidigen
+docker run -d ... calebmsmith/obsidigen:latest
 ```
 
 ## Run on Boot
@@ -544,20 +832,21 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Publishing
 
-For maintainers publishing to npm, see [PUBLISHING.md](PUBLISHING.md) for detailed instructions.
+For maintainers publishing to npm and Docker Hub, see [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
 
 Quick publish:
 
 ```bash
-# Bump version and publish
-npm run release:patch  # For bug fixes
-npm run release:minor  # For new features
-npm run release:major  # For breaking changes
-
-# Manual publish
-npm version patch
-npm publish
+# Bump version and publish to npm AND Docker Hub automatically
+npm run release:patch  # For bug fixes (2.2.1 → 2.2.2)
+npm run release:minor  # For new features (2.2.1 → 2.3.0)
+npm run release:major  # For breaking changes (2.2.1 → 3.0.0)
 ```
+
+This will automatically:
+- ✅ Publish to npm
+- ✅ Build and push Docker images (multi-arch: amd64, arm64)
+- ✅ Create GitHub release with downloadable artifacts
 
 ## License
 

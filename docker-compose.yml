@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  obsidigen:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: obsidigen:latest
+    container_name: obsidigen
+    restart: unless-stopped
+    
+    ports:
+      - "4000:4000"
+    
+    volumes:
+      # Mount your Obsidian vault here
+      - ./your-vault:/vault:ro
+    
+    environment:
+      # Optional: Override default port (default: 4000)
+      - PORT=4000
+      # Optional: Override vault path (default: /vault)
+      - VAULT_PATH=/vault
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:4000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    
+    # Resource limits (optional)
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+# Example with multiple vaults
+# services:
+#   wiki1:
+#     image: obsidigen:latest
+#     ports:
+#       - "4000:4000"
+#     volumes:
+#       - ./vault1:/vault:ro
+#   
+#   wiki2:
+#     image: obsidigen:latest
+#     ports:
+#       - "4001:4000"
+#     volumes:
+#       - ./vault2:/vault:ro

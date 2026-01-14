@@ -1,0 +1,51 @@
+# Node modules
+node_modules
+npm-debug.log
+yarn-error.log
+package-lock.json
+
+# Build artifacts
+dist
+*.tsbuildinfo
+
+# Tests
+test
+tests
+*.test.ts
+*.spec.ts
+coverage
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# GitHub
+.github
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+*.log
+.env
+.env.local
+.env.*.local
+
+# Documentation (keeping README.md)
+docs
+*.md
+!README.md
+
+# CI/CD
+.gitlab-ci.yml
+.travis.yml
+azure-pipelines.yml
