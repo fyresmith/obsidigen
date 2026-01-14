@@ -2259,6 +2259,7 @@ function initTheme() {
   
   document.documentElement.setAttribute('data-theme', theme);
   updateThemeButton(theme);
+  updateThemeColor(typeof currentPanel !== 'undefined' ? currentPanel : 1);
 }
 
 function toggleTheme() {
@@ -2268,6 +2269,7 @@ function toggleTheme() {
   document.documentElement.setAttribute('data-theme', next);
   localStorage.setItem('theme', next);
   updateThemeButton(next);
+  updateThemeColor(typeof currentPanel !== 'undefined' ? currentPanel : 1);
 }
 
 function updateThemeButton(theme) {
@@ -2278,6 +2280,28 @@ function updateThemeButton(theme) {
   const moonIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
   
   btn.innerHTML = (theme === 'dark' ? sunIcon : moonIcon) + '<span>' + (theme === 'dark' ? 'Light mode' : 'Dark mode') + '</span>';
+}
+
+// Update iOS Safari status bar / theme-color meta tag
+// Colors must match CSS variables for seamless panel transitions
+function updateThemeColor(panelIndex = 1) {
+  const meta = document.getElementById('theme-color-meta');
+  if (!meta) return;
+  
+  const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+  
+  // Panel 1 (main content) uses --bg-primary
+  // Panels 0 and 2 (sidebars) use --bg-secondary
+  let color;
+  if (panelIndex === 1) {
+    // Main content panel
+    color = isDark ? '#1a1a1a' : '#fafafa';
+  } else {
+    // Side panels (left nav or right widgets)
+    color = isDark ? '#1a1a1a' : '#ffffff';
+  }
+  
+  meta.setAttribute('content', color);
 }
 
 // ============================================
@@ -2396,6 +2420,9 @@ function goToPanel(panelIndex, animate = true) {
     floatingSearch?.classList.remove('faded');
     panelIndicatorsEl?.classList.remove('faded');
   }
+  
+  // Update iOS Safari status bar color to match current panel
+  updateThemeColor(panelIndex);
 }
 
 // ============================================
@@ -3558,6 +3585,8 @@ function layout(title: string, content: string, options: { vaultName?: string; c
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0f0f0f" id="theme-color-meta">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>${escapeHtml(title)} - ${escapeHtml(vaultName)}</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
