@@ -2959,8 +2959,8 @@ function initSwipeGestures() {
     
     let newPanel = currentPanel;
     
-    // SWIPE THRESHOLD: 15% of screen width
-    const swipeThreshold = window.innerWidth * 0.15;
+    // SWIPE THRESHOLD: 5% of screen width
+    const swipeThreshold = window.innerWidth * 0.05;
     
     // BEHAVIOR 1: On middle panel - short swipe triggers panel change
     if (startPanel === 1) {
@@ -2977,7 +2977,7 @@ function initSwipeGestures() {
         newPanel = 1;
       }
     }
-    // BEHAVIOR 2: On side panels - require 15% swipe distance to change panels
+    // BEHAVIOR 2: On side panels - require 5% swipe distance to change panels
     else {
       // Check if swipe distance meets threshold
       if (Math.abs(diffX) > swipeThreshold) {
