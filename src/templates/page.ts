@@ -265,9 +265,9 @@ body {
 }
 
 .tree-list .tree-list {
-  padding-left: 1rem;
+  padding-left: 0.8rem;
   border-left: 1px solid var(--border-subtle);
-  margin-left: 0.75rem;
+  margin-left: 0.6rem;
 }
 
 .tree-item {
@@ -278,10 +278,10 @@ body {
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.2rem 0.75rem;
+  padding: 0.15rem 0.6rem;
   cursor: pointer;
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 500;
   letter-spacing: 0;
   transition: color 0.1s;
@@ -295,11 +295,11 @@ body {
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.15rem 0.75rem;
+  padding: 0.1rem 0.6rem;
   cursor: pointer;
   color: var(--text-secondary);
   text-decoration: none;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   transition: color 0.1s;
   line-height: 1.5;
 }
@@ -1094,9 +1094,9 @@ body {
   /* Enhanced touch targets for tree navigation */
   .tree-folder-header,
   .tree-page-link {
-    padding: 0.75rem;
+    padding: 0.65rem;
     min-height: 24px;
-    font-size: 0.95rem;
+    font-size: 1rem;
     align-items: center;
   }
   
@@ -1687,8 +1687,7 @@ function initSearch() {
 
 function initTheme() {
   const savedTheme = localStorage.getItem('theme');
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+  const theme = savedTheme || 'dark'; // Default to dark mode
   
   document.documentElement.setAttribute('data-theme', theme);
   updateThemeButton(theme);
