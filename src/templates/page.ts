@@ -1917,7 +1917,8 @@ body {
     transform: none;
     background: var(--bg-secondary);
     border-left: 1px solid var(--border-subtle);
-    padding-bottom: var(--safe-area-bottom);
+    /* Don't add padding-bottom here - let the inner container handle it */
+    padding-bottom: 0;
   }
   
   .wiki-layout {
@@ -1946,6 +1947,9 @@ body {
   /* Panel selector container - match sidebar background on mobile */
   .sidebar-right .panel-selector-container {
     background: var(--bg-secondary);
+    /* Aggressive bottom padding to clear Safari navigation bar */
+    padding-top: 1rem;
+    padding-bottom: calc(80px + var(--safe-area-bottom));
   }
   
   /* Enhanced touch targets for tree navigation */
